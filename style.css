@@ -599,3 +599,6 @@ html[lang="el"] .approach-highlight{
 html[lang="el"] .approach p{
   color: rgba(0,0,0,0.68);
 }
+.glightbox-container .gslide{
+  transition-duration: 120ms !important;
+}
