@@ -1,1 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animal Photography</title>
+ 
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
+<header>
+
+  <nav class="nav">
+
+    <div class="logo">Feel it. Keep it.</div>
+
+    <button class="burger" aria-label="Menu">
+      <span></span>
+      <span></span>
+    </button>
+
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="gallery.html">Gallery</a></li>
+      <li><a href="testimonials.html">Testimonials</a></li>
+      <li><a href="#contacts">Contacts</a></li>
+    </ul>
+<div class="lang-switch">
+  <a href="index.html" class="active">EN</a>
+   <span class="lang-divider">/</span>
+  <a href="index-gr.html">GR</a>
+</div>
+  </nav>
+
+ 
+
+</header>
+ <div class="mobile-menu">
+
+<div class="mobile-menu-header">
+
+    <div class="mobile-lang">
+      <a href="index.html" class="active">EN</a>
+      <span class="lang-divider">/</span>
+      <a href="index-gr.html">GR</a>
+    </div>
+
+    <button class="menu-close" aria-label="Close menu">✕</button>
+</div>
+<div class="mobile-nav">
+    <a href="index.html">Home</a>
+    <a href="gallery.html">Gallery</a>
+    <a href="testimonials.html">Testimonials</a>
+    <a href="#contacts">Contacts</a>
+</div>  
+    <div class="mobile-socials">
+      <a href="https://t.me/ayohansen">Telegram</a>
+      <a href="https://wa.me/306940764896">WhatsApp</a>
+      <a href="mailto:nastyayo@gemail.com">Email</a>
+    </div>
+
+  </div>
+
+  <div class="menu-backdrop"></div>
+
+<main>
+
+
+  <!-- HERO (фото слева, текст справа) -->
+
+  <section class="hero">
+
+    <img src="img/IMG_1261.jpg" alt="Portrait">
+
+    <div class="intro">
+
+      <h1>Anastasiia Yohansen</h1>
+<p>
+Animal photographer based in the Peloponnese, Greece.
+</p>
+      <p>
+I create calm, honest portraits that reflect each animal’s true character — quietly, naturally, and without pressure.
+</p>
+
+      <a class="btn" href="gallery.html">View Gallery</a>
+
+    </div>
+
+  </section>
+
+<section class="section reveal" data-stagger id="about">
+  <div class="section-layout">
+    <h2>About</h2>
+
+    <div class="about-text">
+      <p>
+        I work closely with animals, creating calm and natural portraits that reflect their true personality. With a professional background in animal behaviour and dog training, I understand their language, emotional state, and how to create a safe, relaxed environment. This allows me to work in harmony with each animal’s individual temperament and capture authentic expressions that most people miss.
+        </p>
+
+      <p>
+        I also volunteer as a photographer for the local shelter, Stray Paws of Pyrgos, helping dogs find homes through honest imagery.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+  <!-- GEAR -->
+
+  <section class="section reveal" data-stagger id="gear">
+  <div class="section-layout">
+    <h2>My approach</h2>
+
+    <div class="about-text">
+<p class="approach-intro">
+  I photograph using iPhone to maintain a calm, natural, and non-intrusive environment. Without large cameras or lighting equipment, animals remain relaxed, expressive, and fully themselves.
+<p>The result is not just a photograph, but an honest reflection of who they truly are.</p>
+<p>Anyone can take a picture. My work is to capture presence, personality, and trust.</p>
+</p>
+
+     
+    </div>
+  </div>
+</section>
+
+
+
+
+  <!-- DIPLOMAS -->
+
+<section class="section reveal" data-stagger id="diplomas">
+  <div class="section-layout">
+
+    <h2>Diplomas</h2>
+
+    <div class="section-content diplomas-list">
+
+      <div class="diploma">
+        Dog Training Instructor Diploma  
+        <span class="diploma-meta">
+          National School of Service Dog Training, Ukraine · 2025
+        </span>
+      </div>
+
+      <div class="diploma">
+        Canine-Assisted Therapy Assistant Diploma  
+        <span class="diploma-meta">
+          National School of Service Dog Training, Ukraine · 2026
+        </span>
+      </div>
+
+      <div class="diploma">
+        Certified Professional Dog Trainer  
+        <span class="diploma-meta">
+          Nordic Education Centre for Dog Trainers, Norway · 2023
+        </span>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+
+  <!-- CONTACTS -->
+
+  <section class="section reveal" data-stagger id="contacts">
+<div class="section-layout">
+    <h2>Contacts</h2>
+<div class="section-content">
+    <div class="contact-links">
+
+      <a href="https://t.me/ayohansen" target="_blank" rel="noopener">
+        Telegram
+      </a>
+
+      <a href="https://wa.me/306940764896" target="_blank" rel="noopener">
+        WhatsApp
+      </a>
+
+      <a href="mailto:nastyayo@gmail.com">
+        nastyayo@gmail.com
+      </a>
+
+    </div>
+    </div>
+    </div>
+
+  </section>
+
+
+</main>
+
+
+
+<footer>
+
+  © <span id="year"></span> Anastasiia Yohansen
+
+</footer>
+
+
+
+<script>
+
+  /* year */
+
+  document.getElementById("year").textContent =
+    new Date().getFullYear();
+
+
+
+  /* burger menu */
+  const closeBtn = document.querySelector(".menu-close");
+  const burger =
+    document.querySelector(".burger");
+
+  const menu =
+    document.querySelector(".mobile-menu");
+
+  const backdrop =
+    document.querySelector(".menu-backdrop");
+
+closeBtn?.addEventListener("click", () => {
+  document.body.classList.remove("menu-open");
+});
+  burger.addEventListener("click", () => {
+
+    document.body.classList.toggle("menu-open");
+
+  });
+
+
+  backdrop.addEventListener("click", () => {
+
+    document.body.classList.remove("menu-open");
+
+  });
+
+
+
+  /* cinematic reveal */
+
+  const reveals =
+    document.querySelectorAll(".reveal");
+
+
+  const observer =
+    new IntersectionObserver(
+
+      (entries) => {
+
+        entries.forEach(entry => {
+
+          if (entry.isIntersecting) {
+
+            entry.target.classList.add("is-visible");
+
+          }
+
+        });
+
+      },
+
+      {
+        threshold: 0.25
+      }
+
+    );
+
+
+  reveals.forEach(el =>
+    observer.observe(el)
+  );
+
+
+</script>
+
+<script>
+  const header = document.querySelector("header");
+
+  window.addEventListener("scroll", () => {
+
+    if(window.scrollY > 40){
+      header.classList.add("scrolled");
+    } else {
+      header.classList.remove("scrolled");
+    }
+
+  });
+</script>
+
+</body>
+</html>
