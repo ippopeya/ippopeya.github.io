@@ -599,3 +599,9 @@ html[lang="el"] .approach-highlight{
 html[lang="el"] .approach p{
   color: rgba(0,0,0,0.68);
 }
+/* Softer GLightbox background on mobile (no harsh flashes) */
+@media (hover: none) and (pointer: coarse){
+  .glightbox-container{
+    background: rgba(0,0,0,0.92) !important; /* было более "жёстко" */
+  }
+}
