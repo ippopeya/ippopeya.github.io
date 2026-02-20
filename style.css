@@ -607,5 +607,11 @@ html[lang="el"] .approach p{
     background: rgba(0,0,0,0.80) !important;
     /*opacity: 1 !important;*/
   } 
+}
 
+@media (hover: none) and (pointer: coarse){
+  .logo{
+    pointer-events: auto;
+    cursor: pointer;
+  }
 }
