@@ -605,12 +605,4 @@ html[lang="el"] .approach p{
     background: rgba(0,0,0,0.80) !important; /* было более "жёстко" */
   }
 }
-/* Fix harsh darkening on mobile – adjust actual GLightbox overlay */
-@media (hover: none) and (pointer: coarse){
 
-  .glightbox-container .goverlay{
-    background: rgba(0,0,0,0.80) !important;
-    /*opacity: 1 !important;*/
-  }
-
-}
