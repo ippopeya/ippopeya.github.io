@@ -121,21 +121,13 @@
   document.getElementById('year').textContent = new Date().getFullYear();
 
   // init lightbox
-  const isTouch =
-    ('ontouchstart' in window) ||
-    (navigator.maxTouchPoints > 0);
-
   const lightbox = GLightbox({
-    selector: '.glightbox',
-    loop: true,
-    touchNavigation: true,
-    zoomable: false,
-    draggable: true,
-
-    openEffect: isTouch ? 'none' : 'fade',
-    closeEffect: isTouch ? 'none' : 'fade',
-    slideEffect: isTouch ? 'slide' : 'slide'
-  });
+  selector: '.glightbox',
+  zoomable: false,
+  draggable: true,
+  touchNavigation: true,
+  loop: true
+});
 
   // burger menu
   const closeBtn = document.querySelector(".menu-close");
