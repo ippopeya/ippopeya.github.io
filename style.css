@@ -624,3 +624,29 @@ html[lang="el"] .approach p{
     filter: none !important;
   }
 }
+/* GLightbox: remove fade/dim on touch, keep slide, no stacking */
+@media (hover: none) and (pointer: coarse){
+
+  /* убираем переходы по opacity (именно они дают затухание) */
+  .glightbox-container .gslide,
+  .glightbox-container .gslide-media{
+    transition-property: transform !important;
+    animation: none !important;
+    filter: none !important;
+  }
+
+  /* оставляем нормальную логику: только текущий видим, остальные скрыты */
+  .glightbox-container .gslide:not(.current){
+    opacity: 0 !important;
+  }
+
+  .glightbox-container .gslide.current{
+    opacity: 1 !important;
+  }
+
+  /* на всякий случай убираем любые затемнения/фильтры */
+  .glightbox-container .gslide-media{
+    opacity: 1 !important;
+    filter: none !important;
+  }
+}
