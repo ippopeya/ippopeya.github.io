@@ -121,7 +121,9 @@
   document.getElementById('year').textContent = new Date().getFullYear();
 
   // init lightbox
-const isMobile = window.matchMedia("(max-width: 768px)").matches;
+  const isTouch =
+    ('ontouchstart' in window) ||
+    (navigator.maxTouchPoints > 0);
 
   const lightbox = GLightbox({
     selector: '.glightbox',
@@ -130,9 +132,9 @@ const isMobile = window.matchMedia("(max-width: 768px)").matches;
     zoomable: false,
     draggable: true,
 
-    openEffect: isMobile ? 'none' : 'fade',
-    closeEffect: isMobile ? 'none' : 'fade',
-    slideEffect: isMobile ? 'none' : 'slide'
+    openEffect: isTouch ? 'none' : 'fade',
+    closeEffect: isTouch ? 'none' : 'fade',
+    slideEffect: isTouch ? 'none' : 'slide'
   });
 
   // burger menu
