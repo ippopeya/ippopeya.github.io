@@ -45,6 +45,8 @@ header{
   text-transform: uppercase;
   font-weight: 500;
   color: rgba(0,0,0,0.85);
+  pointer-events: none;
+  cursor: default;
 }
 
 /* Desktop menu */
@@ -613,6 +615,6 @@ html[lang="el"] .approach p{
   .logo{
     pointer-events: auto;
     cursor: pointer;
-    text-decoration: none;
+  
   }
 }
