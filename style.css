@@ -599,18 +599,12 @@ html[lang="el"] .approach-highlight{
 html[lang="el"] .approach p{
   color: rgba(0,0,0,0.68);
 }
-/* Softer GLightbox background on mobile (no harsh flashes) */
-@media (hover: none) and (pointer: coarse){
-  .glightbox-container{
-    background: rgba(10,10,10,0.80) !important; /* было более "жёстко" */
-  }
-}
 
 /* Fix harsh darkening on mobile – adjust actual GLightbox overlay */
 @media (hover: none) and (pointer: coarse){
 
   .glightbox-container .goverlay{
-    background: rgba(0,0,0,0.35) !important;
+    background: rgba(0,0,0,0.80) !important;
     /*opacity: 1 !important;*/
   } 
 
