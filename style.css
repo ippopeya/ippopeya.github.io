@@ -45,8 +45,18 @@ header{
   text-transform: uppercase;
   font-weight: 500;
   color: rgba(0,0,0,0.85);
+
+  text-decoration: none; 
   pointer-events: none;
   cursor: default;
+}
+
+/* убрать подчёркивание во всех состояниях ссылки */
+.logo:visited,
+.logo:hover,
+.logo:active{
+  text-decoration: none;
+  color: inherit;
 }
 
 /* Desktop menu */
