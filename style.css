@@ -602,7 +602,7 @@ html[lang="el"] .approach p{
 /* Softer GLightbox background on mobile (no harsh flashes) */
 @media (hover: none) and (pointer: coarse){
   .glightbox-container{
-    background: rgba(10,10,10,0.72) !important; /* было более "жёстко" */
+    background: rgba(10,10,10,0.65) !important; /* было более "жёстко" */
   }
 }
 
