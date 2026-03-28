@@ -34,11 +34,25 @@ const imageFiles = [
 ];
 
 const basePath = "/img/";
-const initialFillFactor = 1.02;
+
+/*
+  Логика:
+  - быстрый старт без preload всей галереи
+  - ручные колонки для плавности
+  - 2 автоподгрузки
+  - потом Show more
+  - стрелка наверх
+*/
+
 const autoLoadLimit = 2;
 const firstAutoChunk = 3;
 const nextAutoChunk = 3;
 const showMoreChunk = 5;
+
+const initialFillFactor = 1.02;
+const revealDelayInitial = 45;
+const revealDelayAuto = 80;
+const revealDelayMore = 90;
 
 const loader = document.getElementById("loader");
 const app = document.getElementById("galleryApp");
@@ -48,12 +62,20 @@ const moreWrap = document.getElementById("moreWrap");
 const moreBtn = document.getElementById("moreBtn");
 
 let backToTopBtn = null;
+let galleryLightbox = null;
+
 let columns = [];
-let validItems = [];
 let revealIndex = 0;
 let autoLoadsUsed = 0;
 let isAppending = false;
-let galleryLightbox = null;
+let scrollTicking = false;
+let resizeTimer = null;
+
+const imageCache = new Map();
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function getColumnCount() {
   if (window.innerWidth <= 520) return 2;
@@ -63,6 +85,14 @@ function getColumnCount() {
   if (window.innerWidth <= 1550) return 6;
   if (window.innerWidth <= 1800) return 7;
   return 8;
+}
+
+function getInitialChunk() {
+  const cols = getColumnCount();
+  if (cols >= 7) return 7;
+  if (cols >= 5) return 6;
+  if (cols >= 3) return 5;
+  return 4;
 }
 
 function buildColumns() {
@@ -85,8 +115,12 @@ function shortestColumn() {
   }, columns[0]);
 }
 
-function preloadImage(src) {
-  return new Promise((resolve, reject) => {
+function loadImage(index) {
+  if (imageCache.has(index)) return imageCache.get(index);
+
+  const src = basePath + imageFiles[index];
+
+  const promise = new Promise((resolve) => {
     const img = new Image();
 
     img.onload = () => {
@@ -97,9 +131,16 @@ function preloadImage(src) {
       });
     };
 
-    img.onerror = () => reject(src);
+    img.onerror = () => {
+      console.warn("Missing image:", src);
+      resolve(null);
+    };
+
     img.src = src;
   });
+
+  imageCache.set(index, promise);
+  return promise;
 }
 
 const revealObserver = new IntersectionObserver(
@@ -151,32 +192,63 @@ function createCard(item, index) {
   return card;
 }
 
-async function prepareItems() {
-  const results = await Promise.allSettled(
-    imageFiles.map((name) => preloadImage(basePath + name))
-  );
+function updateMoreButton() {
+  if (!moreWrap) return;
 
-  validItems = [];
-  results.forEach((result) => {
-    if (result.status === "fulfilled") {
-      validItems.push(result.value);
-    }
-  });
+  const hasMore = revealIndex < imageFiles.length;
+  const shouldShow = hasMore && autoLoadsUsed >= autoLoadLimit;
+
+  moreWrap.classList.toggle("is-hidden", !shouldShow);
 }
 
-function appendOne(index) {
-  const item = validItems[index];
-  if (!item || !columns.length) return false;
+function createBackToTopButton() {
+  const existing = document.querySelector(".back-to-top");
+
+  if (existing) {
+    backToTopBtn = existing;
+    return;
+  }
+
+  backToTopBtn = document.createElement("button");
+  backToTopBtn.className = "back-to-top";
+  backToTopBtn.type = "button";
+  backToTopBtn.setAttribute("aria-label", "Back to top");
+  backToTopBtn.innerHTML = "⌃";
+
+  backToTopBtn.addEventListener("click", () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  });
+
+  document.body.appendChild(backToTopBtn);
+}
+
+function updateBackToTopVisibility() {
+  if (!backToTopBtn) return;
+  backToTopBtn.classList.toggle("is-visible", window.scrollY > 80);
+}
+
+async function appendOne(index) {
+  if (index >= imageFiles.length || !columns.length) return false;
+
+  const item = await loadImage(index);
+  if (!item) return false;
 
   const card = createCard(item, index);
   const targetColumn = shortestColumn();
   targetColumn.appendChild(card);
+
   return true;
 }
 
-async function appendChunk(count, delay = 90) {
+async function appendChunk(count, delay) {
   if (isAppending) return;
-  if (revealIndex >= validItems.length) return;
+  if (revealIndex >= imageFiles.length) {
+    updateMoreButton();
+    return;
+  }
 
   isAppending = true;
 
@@ -184,14 +256,14 @@ async function appendChunk(count, delay = 90) {
     moreBtn.disabled = true;
   }
 
-  const end = Math.min(revealIndex + count, validItems.length);
+  const end = Math.min(revealIndex + count, imageFiles.length);
 
   for (let i = revealIndex; i < end; i += 1) {
-    const added = appendOne(i);
+    const added = await appendOne(i);
     revealIndex = i + 1;
 
-    if (added) {
-      await new Promise((resolve) => setTimeout(resolve, delay));
+    if (added && delay > 0) {
+      await wait(delay);
     }
   }
 
@@ -209,96 +281,110 @@ async function fillInitialViewport() {
   while (
     gallery &&
     gallery.getBoundingClientRect().height < window.innerHeight * initialFillFactor &&
-    revealIndex < validItems.length
+    revealIndex < imageFiles.length
   ) {
-    await appendChunk(2, 70);
+    await appendChunk(2, revealDelayInitial);
   }
 }
 
-function updateMoreButton() {
-  if (!moreWrap) return;
-
-  const hasMore = revealIndex < validItems.length;
-  const showButton = hasMore && autoLoadsUsed >= autoLoadLimit;
-  moreWrap.classList.toggle("is-hidden", !showButton);
+function canScrollPage() {
+  return document.documentElement.scrollHeight > window.innerHeight + 40;
 }
 
-const autoObserver = new IntersectionObserver(
-  async (entries) => {
-    const entry = entries[0];
-    if (!entry || !entry.isIntersecting) return;
-    if (isAppending) return;
-    if (revealIndex >= validItems.length) {
-      updateMoreButton();
-      return;
-    }
-    if (autoLoadsUsed >= autoLoadLimit) {
-      updateMoreButton();
-      return;
-    }
+function isNearBottom() {
+  const scrollBottom = window.scrollY + window.innerHeight;
+  const docHeight = document.documentElement.scrollHeight;
+  return scrollBottom >= docHeight - 260;
+}
 
-    autoLoadsUsed += 1;
-    await appendChunk(autoLoadsUsed === 1 ? firstAutoChunk : nextAutoChunk, 120);
+async function tryAutoLoad() {
+  if (isAppending) return;
+  if (revealIndex >= imageFiles.length) {
     updateMoreButton();
-  },
-  {
-    root: null,
-    rootMargin: "0px 0px 28% 0px",
-    threshold: 0
-  }
-);
-
-function createBackToTopButton() {
-  if (document.querySelector(".back-to-top")) {
-    backToTopBtn = document.querySelector(".back-to-top");
     return;
   }
 
-  backToTopBtn = document.createElement("button");
-  backToTopBtn.className = "back-to-top";
-  backToTopBtn.type = "button";
-  backToTopBtn.setAttribute("aria-label", "Back to top");
-  backToTopBtn.innerHTML = "⌃";
+  if (autoLoadsUsed >= autoLoadLimit) {
+    updateMoreButton();
+    return;
+  }
 
-  backToTopBtn.addEventListener("click", () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  if (!isNearBottom() && canScrollPage()) return;
+
+  autoLoadsUsed += 1;
+
+  if (autoLoadsUsed === 1) {
+    await appendChunk(firstAutoChunk, revealDelayAuto);
+  } else {
+    await appendChunk(nextAutoChunk, revealDelayAuto);
+  }
+
+  updateMoreButton();
+
+  if (!canScrollPage() && autoLoadsUsed < autoLoadLimit) {
+    await tryAutoLoad();
+  }
+}
+
+function onScroll() {
+  if (scrollTicking) return;
+
+  scrollTicking = true;
+
+  requestAnimationFrame(async () => {
+    scrollTicking = false;
+    updateBackToTopVisibility();
+    await tryAutoLoad();
   });
-
-  document.body.appendChild(backToTopBtn);
 }
 
-function updateBackToTopVisibility() {
-  if (!backToTopBtn) return;
-  backToTopBtn.classList.toggle("is-visible", window.scrollY > 80);
-}
+function rebuildShownItems() {
+  const alreadyShown = revealIndex;
 
-if (moreBtn) {
-  moreBtn.addEventListener("click", async () => {
-    await appendChunk(showMoreChunk, 110);
-  });
-}
+  buildColumns();
+  revealIndex = 0;
 
-let resizeTimer = null;
-window.addEventListener("resize", () => {
-  clearTimeout(resizeTimer);
-
-  resizeTimer = setTimeout(() => {
-    const alreadyShown = revealIndex;
-
-    buildColumns();
-    revealIndex = 0;
-
+  const rebuild = async () => {
     for (let i = 0; i < alreadyShown; i += 1) {
-      appendOne(i);
+      const item = await loadImage(i);
+      if (!item) {
+        revealIndex = i + 1;
+        continue;
+      }
+
+      const card = createCard(item, i);
+      card.classList.add("is-visible");
+
+      const targetColumn = shortestColumn();
+      targetColumn.appendChild(card);
+
+      revealObserver.unobserve(card);
       revealIndex = i + 1;
     }
 
     initLightbox();
     updateMoreButton();
+  };
+
+  rebuild();
+}
+
+if (moreBtn) {
+  moreBtn.addEventListener("click", async () => {
+    await appendChunk(showMoreChunk, revealDelayMore);
+    updateMoreButton();
+  });
+}
+
+window.addEventListener("scroll", onScroll, { passive: true });
+
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+
+  resizeTimer = setTimeout(() => {
+    rebuildShownItems();
   }, 160);
 });
-
-window.addEventListener("scroll", updateBackToTopVisibility, { passive: true });
 
 (async function init() {
   if (!loader || !app || !gallery) {
@@ -308,22 +394,34 @@ window.addEventListener("scroll", updateBackToTopVisibility, { passive: true });
 
   createBackToTopButton();
   buildColumns();
-  await prepareItems();
-  await fillInitialViewport();
+  updateMoreButton();
 
   loader.classList.add("is-hidden");
   app.classList.remove("is-hidden");
 
-  buildColumns();
-  revealIndex = 0;
+  await appendChunk(getInitialChunk(), revealDelayInitial);
   await fillInitialViewport();
 
   initLightbox();
+  updateBackToTopVisibility();
 
   if (sentinel) {
-    autoObserver.observe(sentinel);
+    const sentinelObserver = new IntersectionObserver(
+      async (entries) => {
+        const entry = entries[0];
+        if (!entry || !entry.isIntersecting) return;
+        await tryAutoLoad();
+      },
+      {
+        root: null,
+        rootMargin: "0px 0px 28% 0px",
+        threshold: 0
+      }
+    );
+
+    sentinelObserver.observe(sentinel);
   }
 
+  await tryAutoLoad();
   updateMoreButton();
-  updateBackToTopVisibility();
 })();
