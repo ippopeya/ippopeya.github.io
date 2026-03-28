@@ -424,8 +424,3 @@ window.addEventListener("scroll", updateBackToTopVisibility, { passive: true });
 window.addEventListener("load", () => {
   updateMoreButton();
 });
-
-  autoObserver.observe(sentinel);
-  updateMoreButton();
-  updateBackToTopVisibility();
-})();
