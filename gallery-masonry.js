@@ -53,7 +53,7 @@ let autoLoadsUsed = 0;
 let isAppending = false;
 let galleryLightbox = null;
 
-const itemCache = new Map();
+const imageCache = new Map();
 
 function getColumnCount() {
   if (window.innerWidth <= 520) return 2;
@@ -67,7 +67,10 @@ function getColumnCount() {
 
 function getInitialCount() {
   const cols = getColumnCount();
-  return Math.min(Math.max(cols + 1, 4), 8);
+  if (cols >= 7) return 7;
+  if (cols >= 5) return 6;
+  if (cols >= 3) return 5;
+  return 4;
 }
 
 function buildColumns() {
@@ -91,23 +94,25 @@ function shortestColumn() {
 }
 
 function loadImage(index) {
-  if (itemCache.has(index)) {
-    return itemCache.get(index);
+  if (imageCache.has(index)) {
+    return imageCache.get(index);
   }
 
   const src = basePath + imageFiles[index];
 
-  const promise = new Promise((resolve, reject) => {
+  const promise = new Promise((resolve) => {
     const img = new Image();
+
     img.onload = () => resolve({ src });
-    img.onerror = () => reject(new Error(`Missing image: ${src}`));
+    img.onerror = () => {
+      console.warn("Missing image:", src);
+      resolve(null);
+    };
+
     img.src = src;
-  }).catch((error) => {
-    console.warn(error.message);
-    return null;
   });
 
-  itemCache.set(index, promise);
+  imageCache.set(index, promise);
   return promise;
 }
 
@@ -193,7 +198,10 @@ async function appendChunk(count, delay = 90) {
 
     if (appended) {
       initLightbox();
-      await new Promise((resolve) => setTimeout(resolve, delay));
+
+      if (delay > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
     }
   }
 
@@ -216,7 +224,13 @@ const autoObserver = new IntersectionObserver(
     }
 
     autoLoadsUsed += 1;
-    await appendChunk(autoLoadsUsed === 1 ? firstAutoChunk : nextAutoChunk, 110);
+
+    if (autoLoadsUsed === 1) {
+      await appendChunk(firstAutoChunk, 110);
+    } else {
+      await appendChunk(nextAutoChunk, 110);
+    }
+
     updateMoreButton();
   },
   {
@@ -253,6 +267,7 @@ moreBtn?.addEventListener("click", async () => {
 let resizeTimer = null;
 window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
+
   resizeTimer = setTimeout(async () => {
     const alreadyShown = revealIndex;
 
@@ -273,7 +288,6 @@ window.addEventListener(
   "scroll",
   () => {
     updateBackToTopVisibility();
-    updateMoreButton();
   },
   { passive: true }
 );
@@ -287,7 +301,7 @@ window.addEventListener(
   createBackToTopButton();
   buildColumns();
 
-  await appendChunk(getInitialCount(), 60);
+  await appendChunk(getInitialCount(), 0);
 
   if (!revealIndex) {
     console.error("No gallery images loaded. Check /img/ paths and filenames.");
@@ -297,6 +311,7 @@ window.addEventListener(
   loader.classList.add("is-hidden");
   app.classList.remove("is-hidden");
 
+  initLightbox();
   autoObserver.observe(sentinel);
   updateBackToTopVisibility();
   updateMoreButton();
