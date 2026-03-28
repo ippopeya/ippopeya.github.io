@@ -48,19 +48,12 @@ const moreWrap = document.getElementById("moreWrap");
 const moreBtn = document.getElementById("moreBtn");
 
 let backToTopBtn = null;
-let lightbox = null;
-let lightboxImage = null;
-let lightboxClose = null;
-let lightboxPrev = null;
-let lightboxNext = null;
-
 let columns = [];
 let validItems = [];
 let revealIndex = 0;
 let autoLoadsUsed = 0;
 let isAppending = false;
-let lightboxIndex = 0;
-let touchStartX = 0;
+let galleryLightbox = null;
 
 function getColumnCount() {
   if (window.innerWidth <= 520) return 2;
@@ -121,117 +114,25 @@ const revealObserver = new IntersectionObserver(
   }
 );
 
-function openLightbox(index) {
-  if (!lightbox || !lightboxImage || !validItems.length) return;
+function initLightbox() {
+  if (typeof GLightbox !== "function") return;
 
-  lightboxIndex = index;
-  updateLightboxImage();
-  lightbox.classList.remove("is-hidden");
-  lightbox.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
-}
+  if (galleryLightbox) {
+    galleryLightbox.destroy();
+  }
 
-function closeLightbox() {
-  if (!lightbox) return;
-
-  lightbox.classList.add("is-hidden");
-  lightbox.setAttribute("aria-hidden", "true");
-  document.body.style.overflow = "";
-}
-
-function updateLightboxImage() {
-  const item = validItems[lightboxIndex];
-  if (!item || !lightboxImage) return;
-  lightboxImage.src = item.src;
-}
-
-function showNext() {
-  if (!validItems.length) return;
-  lightboxIndex = (lightboxIndex + 1) % validItems.length;
-  updateLightboxImage();
-}
-
-function showPrev() {
-  if (!validItems.length) return;
-  lightboxIndex = (lightboxIndex - 1 + validItems.length) % validItems.length;
-  updateLightboxImage();
-}
-
-function createLightbox() {
-  lightbox = document.createElement("div");
-  lightbox.className = "lightbox is-hidden";
-  lightbox.setAttribute("aria-hidden", "true");
-
-  lightboxClose = document.createElement("button");
-  lightboxClose.className = "lightbox-close";
-  lightboxClose.type = "button";
-  lightboxClose.setAttribute("aria-label", "Close");
-  lightboxClose.innerHTML = "×";
-
-  lightboxPrev = document.createElement("button");
-  lightboxPrev.className = "lightbox-nav lightbox-prev";
-  lightboxPrev.type = "button";
-  lightboxPrev.setAttribute("aria-label", "Previous");
-  lightboxPrev.innerHTML = "‹";
-
-  lightboxNext = document.createElement("button");
-  lightboxNext.className = "lightbox-nav lightbox-next";
-  lightboxNext.type = "button";
-  lightboxNext.setAttribute("aria-label", "Next");
-  lightboxNext.innerHTML = "›";
-
-  const stage = document.createElement("div");
-  stage.className = "lightbox-stage";
-
-  lightboxImage = document.createElement("img");
-  lightboxImage.className = "lightbox-image";
-  lightboxImage.alt = "Gallery image";
-
-  stage.appendChild(lightboxImage);
-  lightbox.appendChild(lightboxClose);
-  lightbox.appendChild(lightboxPrev);
-  lightbox.appendChild(stage);
-  lightbox.appendChild(lightboxNext);
-  document.body.appendChild(lightbox);
-
-  lightboxClose.addEventListener("click", closeLightbox);
-  lightboxNext.addEventListener("click", showNext);
-  lightboxPrev.addEventListener("click", showPrev);
-
-  lightbox.addEventListener("click", (event) => {
-    if (event.target === lightbox) closeLightbox();
+  galleryLightbox = GLightbox({
+    selector: ".gallery .glightbox",
+    touchNavigation: true,
+    loop: true,
+    zoomable: false,
+    draggable: true
   });
-
-  window.addEventListener("keydown", (event) => {
-    if (!lightbox || lightbox.classList.contains("is-hidden")) return;
-    if (event.key === "Escape") closeLightbox();
-    if (event.key === "ArrowRight") showNext();
-    if (event.key === "ArrowLeft") showPrev();
-  });
-
-  lightbox.addEventListener(
-    "touchstart",
-    (event) => {
-      touchStartX = event.changedTouches[0].clientX;
-    },
-    { passive: true }
-  );
-
-  lightbox.addEventListener(
-    "touchend",
-    (event) => {
-      const delta = event.changedTouches[0].clientX - touchStartX;
-      if (Math.abs(delta) < 35) return;
-      if (delta < 0) showNext();
-      if (delta > 0) showPrev();
-    },
-    { passive: true }
-  );
 }
 
-function createCard(item, index) {
+function createCard(item) {
   const card = document.createElement("a");
-  card.className = "masonry-item";
+  card.className = "masonry-item glightbox";
   card.href = item.src;
 
   const img = document.createElement("img");
@@ -241,13 +142,8 @@ function createCard(item, index) {
   img.decoding = "async";
 
   card.appendChild(img);
-
-  card.addEventListener("click", (event) => {
-    event.preventDefault();
-    openLightbox(index);
-  });
-
   revealObserver.observe(card);
+
   return card;
 }
 
@@ -270,7 +166,7 @@ function appendOne(index) {
   const item = validItems[index];
   if (!item || !columns.length) return;
 
-  const card = createCard(item, index);
+  const card = createCard(item);
   const targetColumn = shortestColumn();
   targetColumn.appendChild(card);
 }
@@ -290,6 +186,7 @@ async function appendChunk(count, delay = 90) {
     await new Promise((resolve) => setTimeout(resolve, delay));
   }
 
+  initLightbox();
   updateMoreButton();
 
   if (moreBtn) moreBtn.disabled = false;
@@ -330,6 +227,7 @@ const autoObserver = new IntersectionObserver(
     if (!entry.isIntersecting) return;
     if (isAppending) return;
     if (revealIndex >= validItems.length) return;
+
     if (autoLoadsUsed >= autoLoadLimit) {
       updateMoreButton();
       return;
@@ -384,6 +282,7 @@ window.addEventListener("resize", () => {
       revealIndex = i + 1;
     }
 
+    initLightbox();
     updateMoreButton();
   }, 160);
 });
@@ -397,7 +296,6 @@ window.addEventListener("scroll", updateBackToTopVisibility, { passive: true });
   }
 
   createBackToTopButton();
-  createLightbox();
   buildColumns();
   await prepareItems();
 
@@ -415,6 +313,7 @@ window.addEventListener("scroll", updateBackToTopVisibility, { passive: true });
   revealIndex = 0;
   await fillInitialViewport();
 
+  initLightbox();
   autoObserver.observe(sentinel);
   updateMoreButton();
   updateBackToTopVisibility();
