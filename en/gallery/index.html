@@ -18,23 +18,24 @@
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="677" />
-  <link rel="icon" type="image/png" href="/favicon.png">
-  <link rel="stylesheet" href="/style.css" />
+
+<link rel="icon" type="image/png" href="/favicon.png">
+
+<link rel="stylesheet" href="/style.css" />
+<link rel="stylesheet" href="/gallery-masonry.css" />
 
 <link rel="alternate" hreflang="en" href="https://ayohansen.com/en/gallery/" />
 <link rel="alternate" hreflang="el" href="https://ayohansen.com/gr/gallery/" />
 <link rel="alternate" hreflang="x-default" href="https://ayohansen.com/en/gallery/" />
 
-  <!-- GLightbox CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" rel="stylesheet">
-
-  <link rel="canonical" href="https://ayohansen.com/en/gallery/" />
+<link rel="canonical" href="https://ayohansen.com/en/gallery/" />
 </head>
+
 <body>
 
 <header>
   <nav class="nav">
-   <a class="logo" href="/en/">Feel it. Keep it.</a>
+    <a class="logo" href="/en/">Feel it. Keep it.</a>
 
     <button class="burger" aria-label="Open menu" aria-expanded="false">
       <span></span><span></span>
@@ -46,18 +47,17 @@
       <li><a href="/en/testimonials/">Testimonials</a></li>
       <li><a href="/en/#contacts">Contacts</a></li>
     </ul>
+
     <div class="lang-switch">
-  <a href="/en/gallery/" class="active">EN</a>
-  <span class="lang-divider">/</span>
-  <a href="/gr/gallery/">GR</a>
-</div>
+      <a href="/en/gallery/" class="active">EN</a>
+      <span class="lang-divider">/</span>
+      <a href="/gr/gallery/">GR</a>
+    </div>
   </nav>
-
- 
 </header>
- <div class="mobile-menu" aria-hidden="true">
-<div class="mobile-menu-header">
 
+<div class="mobile-menu" aria-hidden="true">
+  <div class="mobile-menu-header">
     <div class="mobile-lang">
       <a href="/en/gallery/" class="active">EN</a>
       <span class="lang-divider">/</span>
@@ -65,93 +65,46 @@
     </div>
 
     <button class="menu-close" aria-label="Close menu">✕</button>
-</div>
-<div class="mobile-nav">
+  </div>
+
+  <div class="mobile-nav">
     <a href="/en/">Home</a>
     <a href="/en/gallery/">Gallery</a>
     <a href="/en/testimonials/">Testimonials</a>
     <a href="/en/#contacts">Contacts</a>
-</div>  
-    
-    <div class="mobile-socials">
-      <a href="https://t.me/ayohansen" target="_blank" rel="noopener">Telegram</a>
-      <a href="https://wa.me/306940764896" target="_blank" rel="noopener">WhatsApp</a>
-      <a href="mailto:nastyayo@gemail.com">Email</a>
-    </div>
-  </div>
+  </div>  
 
-  <div class="menu-backdrop"></div>
+  <div class="mobile-socials">
+    <a href="https://t.me/ayohansen" target="_blank">Telegram</a>
+    <a href="https://wa.me/306940764896" target="_blank">WhatsApp</a>
+    <a href="mailto:nastyayo@gemail.com">Email</a>
+  </div>
+</div>
+
+<div class="menu-backdrop"></div>
+
 <main>
   <section class="gallery">
     <h1>Gallery</h1>
 
-    <div class="grid">
-      <!-- Важно: img внутри <a> для fullscreen -->
-      <a href="/img/mix_terrier_closeup.jpg" class="glightbox">
-        <img src="/img/mix_terrier_closeup.jpg" alt="Dog portrait" loading="lazy">
-      </a>      
-      
-      <a href="/img/IMG_7695.jpg" class="glightbox">
-        <img src="/img/IMG_7695.jpg" alt="Golden retriever in the sea during sunset" loading="lazy">
-      </a>  
-      
-      <a href="/img/IMG_1387.jpg" class="glightbox">
-        <img src="/img/IMG_1387.jpg" alt="Dog hugs" loading="lazy">
-      </a>
+    <!-- НОВАЯ ГАЛЕРЕЯ -->
+    <div class="gallery-shell">
+      <div id="loader" class="gallery-loader">
+        <div class="gallery-loader__dot"></div>
+        <div class="gallery-loader__text">Loading gallery...</div>
+      </div>
 
-      <a href="/img/IMG_9753.jpg" class="glightbox">
-        <img src="/img/IMG_9753.jpg" alt="Cat is looking at the window" loading="lazy">
-      </a>    
-      
-      <a href="/img/IMG_3719.jpg" class="glightbox">
-        <img src="/img/IMG_3719.jpg" alt="Dachshund closeup" loading="lazy">
-      </a>
+      <div id="galleryApp" class="gallery-app is-hidden">
+        <div id="gallery" class="masonry"></div>
 
-      <a href="/img/IMG_3009.jpg" class="glightbox">
-        <img src="/img/IMG_3009.jpg" alt="Dogs are kissing" loading="lazy">
-      </a>
+        <div id="sentinel" class="sentinel"></div>
 
-      <a href="/img/IMG_9910.jpg" class="glightbox">
-        <img src="/img/IMG_9910.jpg" alt="White cat" loading="lazy">
-      </a>     
-      
-      <a href="/img/IMG_3040.jpg" class="glightbox">
-        <img src="/img/IMG_3040.jpg" alt="Mix terrier portrait" loading="lazy">
-      </a>      
-
-      <a href="/img/IMG_1356.jpg" class="glightbox">
-        <img src="/img/IMG_1356.jpg" alt="Dog and flower" loading="lazy">
-      </a>   
-      
-      <a href="/img/IMG_3309.jpg" class="glightbox">
-        <img src="/img/IMG_3309.jpg" alt="Playfull dog" loading="lazy">
-      </a>    
-
-      <a href="/img/IMG_9796.jpg" class="glightbox">
-        <img src="/img/IMG_9796.jpg" alt="Red kitten on my knees" loading="lazy">
-      </a>
-
-      <a href="/img/IMG_7745.jpg" class="glightbox">
-        <img src="/img/IMG_7745.jpg" alt="Golden retriever in the sea" loading="lazy">
-      </a>      
-      
-      <a href="/img/kitten_eating_milk.jpg" class="glightbox">
-        <img src="/img/kitten_eating_milk.jpg" alt="Kitten eating milk from bottle" loading="lazy">
-      </a>
-
-      <a href="/img/IMG_2748.jpg" class="glightbox">
-        <img src="/img/IMG_2748.jpg" alt="Red Dog portrait" loading="lazy">
-      </a>
-      
-      <a href="/img/blackcat.jpg" class="glightbox">
-        <img src="/img/blackcat.jpg" alt="Black cat" loading="lazy">
-      </a> 
- 
+        <div id="moreWrap" class="more-wrap is-hidden">
+          <button id="moreBtn" class="more-btn">Show more</button>
+        </div>
+      </div>
     </div>
 
-    <div class="gallery-button">
-      <button onclick="lightbox.open()">View Fullscreen</button>
-    </div>
   </section>
 </main>
 
@@ -159,29 +112,19 @@
   © <span id="year"></span> Anastasiia Yohansen
 </footer>
 
-<!-- GLightbox JS -->
-<script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+<script src="/gallery-masonry.js"></script>
+
 <script>
   document.getElementById('year').textContent = new Date().getFullYear();
 
-  // init lightbox
-const lightbox = GLightbox({
-  selector: '.glightbox',
-  zoomable: false,
-  draggable: true,
-  touchNavigation: true,
-  loop: true
-});
-
-  // burger menu
   const closeBtn = document.querySelector(".menu-close");
   const burger = document.querySelector('.burger');
   const menu = document.querySelector('.mobile-menu');
   const backdrop = document.querySelector('.menu-backdrop');
 
   closeBtn?.addEventListener("click", () => {
-  document.body.classList.remove("menu-open");
-});
+    document.body.classList.remove("menu-open");
+  });
 
   function closeMenu(){
     document.body.classList.remove('menu-open');
@@ -206,17 +149,16 @@ const lightbox = GLightbox({
     if(e.key === 'Escape') closeMenu();
   });
 </script>
+
 <script>
   const header = document.querySelector("header");
 
   window.addEventListener("scroll", () => {
-
     if(window.scrollY > 40){
       header.classList.add("scrolled");
     } else {
       header.classList.remove("scrolled");
     }
-
   });
 </script>
 
