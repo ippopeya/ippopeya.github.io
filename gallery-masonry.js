@@ -47,13 +47,12 @@ const sentinel = document.getElementById("sentinel");
 const moreWrap = document.getElementById("moreWrap");
 const moreBtn = document.getElementById("moreBtn");
 
-const lightbox = document.getElementById("lightbox");
-const lightboxImage = document.getElementById("lightboxImage");
-const lightboxClose = document.getElementById("lightboxClose");
-const lightboxPrev = document.getElementById("lightboxPrev");
-const lightboxNext = document.getElementById("lightboxNext");
-
 let backToTopBtn = null;
+let lightbox = null;
+let lightboxImage = null;
+let lightboxClose = null;
+let lightboxPrev = null;
+let lightboxNext = null;
 
 let columns = [];
 let validItems = [];
@@ -74,6 +73,8 @@ function getColumnCount() {
 }
 
 function buildColumns() {
+  if (!gallery) return;
+
   gallery.innerHTML = "";
   columns = [];
 
@@ -120,11 +121,118 @@ const revealObserver = new IntersectionObserver(
   }
 );
 
+function openLightbox(index) {
+  if (!lightbox || !lightboxImage || !validItems.length) return;
+
+  lightboxIndex = index;
+  updateLightboxImage();
+  lightbox.classList.remove("is-hidden");
+  lightbox.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+
+function closeLightbox() {
+  if (!lightbox) return;
+
+  lightbox.classList.add("is-hidden");
+  lightbox.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+
+function updateLightboxImage() {
+  const item = validItems[lightboxIndex];
+  if (!item || !lightboxImage) return;
+  lightboxImage.src = item.src;
+}
+
+function showNext() {
+  if (!validItems.length) return;
+  lightboxIndex = (lightboxIndex + 1) % validItems.length;
+  updateLightboxImage();
+}
+
+function showPrev() {
+  if (!validItems.length) return;
+  lightboxIndex = (lightboxIndex - 1 + validItems.length) % validItems.length;
+  updateLightboxImage();
+}
+
+function createLightbox() {
+  lightbox = document.createElement("div");
+  lightbox.className = "lightbox is-hidden";
+  lightbox.setAttribute("aria-hidden", "true");
+
+  lightboxClose = document.createElement("button");
+  lightboxClose.className = "lightbox-close";
+  lightboxClose.type = "button";
+  lightboxClose.setAttribute("aria-label", "Close");
+  lightboxClose.innerHTML = "×";
+
+  lightboxPrev = document.createElement("button");
+  lightboxPrev.className = "lightbox-nav lightbox-prev";
+  lightboxPrev.type = "button";
+  lightboxPrev.setAttribute("aria-label", "Previous");
+  lightboxPrev.innerHTML = "‹";
+
+  lightboxNext = document.createElement("button");
+  lightboxNext.className = "lightbox-nav lightbox-next";
+  lightboxNext.type = "button";
+  lightboxNext.setAttribute("aria-label", "Next");
+  lightboxNext.innerHTML = "›";
+
+  const stage = document.createElement("div");
+  stage.className = "lightbox-stage";
+
+  lightboxImage = document.createElement("img");
+  lightboxImage.className = "lightbox-image";
+  lightboxImage.alt = "Gallery image";
+
+  stage.appendChild(lightboxImage);
+  lightbox.appendChild(lightboxClose);
+  lightbox.appendChild(lightboxPrev);
+  lightbox.appendChild(stage);
+  lightbox.appendChild(lightboxNext);
+  document.body.appendChild(lightbox);
+
+  lightboxClose.addEventListener("click", closeLightbox);
+  lightboxNext.addEventListener("click", showNext);
+  lightboxPrev.addEventListener("click", showPrev);
+
+  lightbox.addEventListener("click", (event) => {
+    if (event.target === lightbox) closeLightbox();
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (!lightbox || lightbox.classList.contains("is-hidden")) return;
+    if (event.key === "Escape") closeLightbox();
+    if (event.key === "ArrowRight") showNext();
+    if (event.key === "ArrowLeft") showPrev();
+  });
+
+  lightbox.addEventListener(
+    "touchstart",
+    (event) => {
+      touchStartX = event.changedTouches[0].clientX;
+    },
+    { passive: true }
+  );
+
+  lightbox.addEventListener(
+    "touchend",
+    (event) => {
+      const delta = event.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(delta) < 35) return;
+      if (delta < 0) showNext();
+      if (delta > 0) showPrev();
+    },
+    { passive: true }
+  );
+}
+
 function createCard(item, index) {
   const card = document.createElement("a");
   card.className = "masonry-item";
   card.href = item.src;
-  card.dataset.index = String(index);
 
   const img = document.createElement("img");
   img.src = item.src;
@@ -149,14 +257,18 @@ async function prepareItems() {
   );
 
   validItems = [];
-  results.forEach((result) => {
-    if (result.status === "fulfilled") validItems.push(result.value);
+  results.forEach((result, idx) => {
+    if (result.status === "fulfilled") {
+      validItems.push(result.value);
+    } else {
+      console.warn("Missing image:", imageFiles[idx]);
+    }
   });
 }
 
 function appendOne(index) {
   const item = validItems[index];
-  if (!item) return;
+  if (!item || !columns.length) return;
 
   const card = createCard(item, index);
   const targetColumn = shortestColumn();
@@ -168,7 +280,7 @@ async function appendChunk(count, delay = 90) {
   if (revealIndex >= validItems.length) return;
 
   isAppending = true;
-  moreBtn.disabled = true;
+  if (moreBtn) moreBtn.disabled = true;
 
   const end = Math.min(revealIndex + count, validItems.length);
 
@@ -179,12 +291,14 @@ async function appendChunk(count, delay = 90) {
   }
 
   updateMoreButton();
-  moreBtn.disabled = false;
+
+  if (moreBtn) moreBtn.disabled = false;
   isAppending = false;
 }
 
 async function fillInitialViewport() {
   while (
+    gallery &&
     gallery.getBoundingClientRect().height < window.innerHeight * initialFillFactor &&
     revealIndex < validItems.length
   ) {
@@ -195,7 +309,7 @@ async function fillInitialViewport() {
 function updateMoreButton() {
   const hasMore = revealIndex < validItems.length;
   const showButton = hasMore && autoLoadsUsed >= autoLoadLimit;
-  moreWrap.classList.toggle("is-hidden", !showButton);
+  moreWrap?.classList.toggle("is-hidden", !showButton);
 }
 
 const autoObserver = new IntersectionObserver(
@@ -217,36 +331,6 @@ const autoObserver = new IntersectionObserver(
   }
 );
 
-function openLightbox(index) {
-  lightboxIndex = index;
-  updateLightboxImage();
-  lightbox.classList.remove("is-hidden");
-  document.body.style.overflow = "hidden";
-  lightbox.setAttribute("aria-hidden", "false");
-}
-
-function closeLightbox() {
-  lightbox.classList.add("is-hidden");
-  document.body.style.overflow = "";
-  lightbox.setAttribute("aria-hidden", "true");
-}
-
-function updateLightboxImage() {
-  const item = validItems[lightboxIndex];
-  if (!item) return;
-  lightboxImage.src = item.src;
-}
-
-function showNext() {
-  lightboxIndex = (lightboxIndex + 1) % validItems.length;
-  updateLightboxImage();
-}
-
-function showPrev() {
-  lightboxIndex = (lightboxIndex - 1 + validItems.length) % validItems.length;
-  updateLightboxImage();
-}
-
 function createBackToTopButton() {
   backToTopBtn = document.createElement("button");
   backToTopBtn.className = "back-to-top";
@@ -266,41 +350,7 @@ function updateBackToTopVisibility() {
   backToTopBtn.classList.toggle("is-visible", window.scrollY > 80);
 }
 
-lightboxClose.addEventListener("click", closeLightbox);
-lightboxNext.addEventListener("click", showNext);
-lightboxPrev.addEventListener("click", showPrev);
-
-lightbox.addEventListener("click", (event) => {
-  if (event.target === lightbox) closeLightbox();
-});
-
-window.addEventListener("keydown", (event) => {
-  if (lightbox.classList.contains("is-hidden")) return;
-  if (event.key === "Escape") closeLightbox();
-  if (event.key === "ArrowRight") showNext();
-  if (event.key === "ArrowLeft") showPrev();
-});
-
-lightbox.addEventListener(
-  "touchstart",
-  (event) => {
-    touchStartX = event.changedTouches[0].clientX;
-  },
-  { passive: true }
-);
-
-lightbox.addEventListener(
-  "touchend",
-  (event) => {
-    const delta = event.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(delta) < 35) return;
-    if (delta < 0) showNext();
-    if (delta > 0) showPrev();
-  },
-  { passive: true }
-);
-
-moreBtn.addEventListener("click", async () => {
+moreBtn?.addEventListener("click", async () => {
   await appendChunk(showMoreChunk, 110);
 });
 
@@ -324,9 +374,21 @@ window.addEventListener("resize", () => {
 window.addEventListener("scroll", updateBackToTopVisibility, { passive: true });
 
 (async function init() {
+  if (!loader || !app || !gallery || !sentinel || !moreWrap || !moreBtn) {
+    console.error("Gallery HTML elements are missing.");
+    return;
+  }
+
   createBackToTopButton();
+  createLightbox();
   buildColumns();
   await prepareItems();
+
+  if (!validItems.length) {
+    console.error("No gallery images loaded. Check /img/ paths and filenames.");
+    return;
+  }
+
   await fillInitialViewport();
 
   loader.classList.add("is-hidden");
