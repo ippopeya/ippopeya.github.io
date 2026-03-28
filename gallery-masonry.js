@@ -34,6 +34,7 @@ const imageFiles = [
 ];
 
 const basePath = "/img/";
+
 const autoLoadLimit = 2;
 const firstAutoChunk = 3;
 const nextAutoChunk = 3;
@@ -46,8 +47,6 @@ const sentinel = document.getElementById("sentinel");
 const moreWrap = document.getElementById("moreWrap");
 const moreBtn = document.getElementById("moreBtn");
 
-let backToTopBtn = null;
-let columns = [];
 let revealIndex = 0;
 let autoLoadsUsed = 0;
 let isAppending = false;
@@ -73,38 +72,18 @@ function getInitialCount() {
   return 4;
 }
 
-function buildColumns() {
-  if (!gallery) return;
-
-  gallery.innerHTML = "";
-  columns = [];
-
-  const columnCount = getColumnCount();
-
-  for (let i = 0; i < columnCount; i += 1) {
-    const col = document.createElement("div");
-    col.className = "masonry-column";
-    gallery.appendChild(col);
-    columns.push(col);
-  }
-}
-
 function loadImage(index) {
-  if (imageCache.has(index)) {
-    return imageCache.get(index);
-  }
+  if (imageCache.has(index)) return imageCache.get(index);
 
   const src = basePath + imageFiles[index];
 
   const promise = new Promise((resolve) => {
     const img = new Image();
-
-    img.onload = () => resolve({ src });
+    img.onload = () => resolve(src);
     img.onerror = () => {
       console.warn("Missing image:", src);
       resolve(null);
     };
-
     img.src = src;
   });
 
@@ -160,62 +139,49 @@ function createCard(src) {
   return card;
 }
 
-/**
- * ВАЖНО:
- * больше не пытаемся вычислять "самую низкую" колонку по offsetHeight
- * до загрузки картинки. Это и ломало раскладку.
- * Вместо этого используем стабильную round-robin раскладку.
- */
-function getTargetColumn(index) {
-  if (!columns.length) return null;
-  return columns[index % columns.length];
-}
-
 async function appendOne(index) {
-  if (!columns.length || index >= imageFiles.length) return false;
+  if (!gallery || index >= imageFiles.length) return false;
 
-  const item = await loadImage(index);
-  if (!item) return false;
+  const src = await loadImage(index);
+  if (!src) return false;
 
-  const card = createCard(item.src);
-  const targetColumn = getTargetColumn(index);
-  if (!targetColumn) return false;
+  const card = createCard(src);
+  gallery.appendChild(card);
 
-  targetColumn.appendChild(card);
   return true;
 }
 
 function updateMoreButton() {
   const hasMore = revealIndex < imageFiles.length;
   const shouldShow = hasMore && autoLoadsUsed >= autoLoadLimit;
-  moreWrap?.classList.toggle("is-hidden", !shouldShow);
+
+  moreWrap.classList.toggle("is-hidden", !shouldShow);
 }
 
-async function appendChunk(count, delay = 90) {
+async function appendChunk(count, delay = 80) {
   if (isAppending) return;
   if (revealIndex >= imageFiles.length) return;
 
   isAppending = true;
-  if (moreBtn) moreBtn.disabled = true;
+  moreBtn.disabled = true;
 
   const end = Math.min(revealIndex + count, imageFiles.length);
 
-  for (let i = revealIndex; i < end; i += 1) {
-    const appended = await appendOne(i);
+  for (let i = revealIndex; i < end; i++) {
+    const ok = await appendOne(i);
     revealIndex = i + 1;
 
-    if (appended) {
+    if (ok) {
       initLightbox();
-
       if (delay > 0) {
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await new Promise(r => setTimeout(r, delay));
       }
     }
   }
 
   updateMoreButton();
 
-  if (moreBtn) moreBtn.disabled = false;
+  moreBtn.disabled = false;
   isAppending = false;
 }
 
@@ -231,96 +197,44 @@ const autoObserver = new IntersectionObserver(
       return;
     }
 
-    autoLoadsUsed += 1;
+    autoLoadsUsed++;
 
     if (autoLoadsUsed === 1) {
-      await appendChunk(firstAutoChunk, 110);
+      await appendChunk(firstAutoChunk);
     } else {
-      await appendChunk(nextAutoChunk, 110);
+      await appendChunk(nextAutoChunk);
     }
 
     updateMoreButton();
   },
   {
     root: null,
-    rootMargin: "0px 0px 28% 0px",
+    rootMargin: "0px 0px 30% 0px",
     threshold: 0
   }
 );
 
-function createBackToTopButton() {
-  backToTopBtn = document.createElement("button");
-  backToTopBtn.className = "back-to-top";
-  backToTopBtn.type = "button";
-  backToTopBtn.setAttribute("aria-label", "Back to top");
-  backToTopBtn.innerHTML = "⌃";
-
-  backToTopBtn.addEventListener("click", () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
-
-  document.body.appendChild(backToTopBtn);
-}
-
-function updateBackToTopVisibility() {
-  if (!backToTopBtn) return;
-  backToTopBtn.classList.toggle("is-visible", window.scrollY > 80);
-}
-
-moreBtn?.addEventListener("click", async () => {
-  await appendChunk(showMoreChunk, 100);
+moreBtn.addEventListener("click", async () => {
+  await appendChunk(showMoreChunk);
   updateMoreButton();
 });
 
-let resizeTimer = null;
-window.addEventListener("resize", () => {
-  clearTimeout(resizeTimer);
-
-  resizeTimer = setTimeout(async () => {
-    const alreadyShown = revealIndex;
-
-    buildColumns();
-    revealIndex = 0;
-
-    for (let i = 0; i < alreadyShown; i += 1) {
-      await appendOne(i);
-      revealIndex = i + 1;
-    }
-
-    initLightbox();
-    updateMoreButton();
-  }, 160);
-});
-
-window.addEventListener(
-  "scroll",
-  () => {
-    updateBackToTopVisibility();
-  },
-  { passive: true }
-);
-
 (async function init() {
-  if (!loader || !app || !gallery || !sentinel || !moreWrap || !moreBtn) {
-    console.error("Gallery HTML elements are missing.");
+  if (!loader || !app || !gallery) {
+    console.error("Gallery elements missing");
     return;
   }
-
-  createBackToTopButton();
-  buildColumns();
 
   await appendChunk(getInitialCount(), 0);
-
-  if (!revealIndex) {
-    console.error("No gallery images loaded. Check /img/ paths and filenames.");
-    return;
-  }
 
   loader.classList.add("is-hidden");
   app.classList.remove("is-hidden");
 
   initLightbox();
-  autoObserver.observe(sentinel);
-  updateBackToTopVisibility();
+
+  if (sentinel) {
+    autoObserver.observe(sentinel);
+  }
+
   updateMoreButton();
 })();
