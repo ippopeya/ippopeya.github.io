@@ -1,30 +1,17 @@
-* { box-sizing: border-box; }
+/* gallery only — do not touch global header/nav styles */
 
-html, body {
-  margin: 0;
-  padding: 0;
-  background: #f6f6f2;
-  color: #333;
-  font-family: Inter, Arial, sans-serif;
-  scroll-behavior: smooth;
-}
-
-body {
-  min-height: 100vh;
-}
-
-.gallery-shell {
+.gallery .gallery-shell {
   width: min(1600px, calc(100% - 18px));
   margin: 0 auto;
   padding: 8px 0 28px;
 }
 
-.gallery-app.is-hidden,
-.is-hidden {
+.gallery .gallery-app.is-hidden,
+.gallery .is-hidden {
   display: none !important;
 }
 
-.gallery-loader {
+.gallery .gallery-loader {
   min-height: 34vh;
   display: grid;
   place-items: center;
@@ -32,40 +19,41 @@ body {
   padding-top: 60px;
 }
 
-.gallery-loader__dot {
+.gallery .gallery-loader__dot {
   width: 34px;
   height: 34px;
   border-radius: 999px;
   border: 2px solid rgba(0,0,0,.12);
   border-top-color: rgba(0,0,0,.58);
-  animation: spin .9s linear infinite;
+  animation: gallerySpin .9s linear infinite;
 }
 
-.gallery-loader__text {
+.gallery .gallery-loader__text {
   font-size: 13px;
   letter-spacing: 1.6px;
   text-transform: uppercase;
   color: rgba(0,0,0,.55);
+  white-space: nowrap;
 }
 
-@keyframes spin {
+@keyframes gallerySpin {
   to { transform: rotate(360deg); }
 }
 
-.masonry {
+.gallery .masonry {
   display: grid;
   align-items: start;
   gap: 8px;
   grid-template-columns: repeat(8, minmax(0, 1fr));
 }
 
-.masonry-column {
+.gallery .masonry-column {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.masonry-item {
+.gallery .masonry-item {
   position: relative;
   display: block;
   overflow: hidden;
@@ -78,24 +66,24 @@ body {
   will-change: transform, opacity;
 }
 
-.masonry-item.is-visible {
+.gallery .masonry-item.is-visible {
   opacity: 1;
   transform: translateY(0);
 }
 
-.masonry-item img {
+.gallery .masonry-item img {
   display: block;
   width: 100%;
   height: auto;
   min-height: 120px;
 }
 
-.more-wrap {
+.gallery .more-wrap {
   text-align: center;
   margin-top: 22px;
 }
 
-.more-btn {
+.gallery .more-btn {
   background: transparent;
   border: none;
   border-bottom: 1px solid rgba(0,0,0,.72);
@@ -108,16 +96,16 @@ body {
   transition: opacity .25s ease;
 }
 
-.more-btn:hover {
+.gallery .more-btn:hover {
   opacity: .55;
 }
 
-.more-btn[disabled] {
+.gallery .more-btn[disabled] {
   opacity: .34;
   cursor: default;
 }
 
-.sentinel {
+.gallery .sentinel {
   width: 100%;
   height: 1px;
   margin-top: 4px;
@@ -199,14 +187,11 @@ body {
   line-height: 1;
   cursor: pointer;
   z-index: 3000;
-
   border-radius: 50%;
   box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-
   opacity: 0;
   pointer-events: none;
   transform: translateY(10px) scale(0.95);
-
   transition:
     opacity .25s ease,
     transform .25s ease,
@@ -226,51 +211,51 @@ body {
 }
 
 @media (max-width: 1800px) {
-  .masonry {
+  .gallery .masonry {
     grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 1550px) {
-  .masonry {
+  .gallery .masonry {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 1280px) {
-  .masonry {
+  .gallery .masonry {
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 7px;
   }
 
-  .masonry-column {
+  .gallery .masonry-column {
     gap: 7px;
   }
 }
 
 @media (max-width: 980px) {
-  .masonry {
+  .gallery .masonry {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 7px;
   }
 
-  .masonry-column {
+  .gallery .masonry-column {
     gap: 7px;
   }
 }
 
 @media (max-width: 760px) {
-  .gallery-shell {
+  .gallery .gallery-shell {
     width: min(100% - 14px, 1200px);
     padding-top: 6px;
   }
 
-  .masonry {
+  .gallery .masonry {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
   }
 
-  .masonry-column {
+  .gallery .masonry-column {
     gap: 6px;
   }
 
@@ -288,17 +273,17 @@ body {
 }
 
 @media (max-width: 520px) {
-  .gallery-shell {
+  .gallery .gallery-shell {
     width: min(100% - 10px, 900px);
     padding-top: 4px;
   }
 
-  .masonry {
+  .gallery .masonry {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 5px;
   }
 
-  .masonry-column {
+  .gallery .masonry-column {
     gap: 5px;
   }
 
