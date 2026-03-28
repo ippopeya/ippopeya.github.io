@@ -29,6 +29,8 @@
 <link rel="alternate" hreflang="x-default" href="https://ayohansen.com/en/gallery/" />
 
 <link rel="canonical" href="https://ayohansen.com/en/gallery/" />
+
+<link href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" rel="stylesheet">
 </head>
 
 <body>
@@ -72,7 +74,7 @@
     <a href="/en/gallery/">Gallery</a>
     <a href="/en/testimonials/">Testimonials</a>
     <a href="/en/#contacts">Contacts</a>
-  </div>  
+  </div>
 
   <div class="mobile-socials">
     <a href="https://t.me/ayohansen" target="_blank">Telegram</a>
@@ -87,7 +89,6 @@
   <section class="gallery">
     <h1>Gallery</h1>
 
-    <!-- НОВАЯ ГАЛЕРЕЯ -->
     <div class="gallery-shell">
       <div id="loader" class="gallery-loader">
         <div class="gallery-loader__dot"></div>
@@ -95,16 +96,14 @@
       </div>
 
       <div id="galleryApp" class="gallery-app is-hidden">
-        <div id="gallery" class="masonry"></div>
-
-        <div id="sentinel" class="sentinel"></div>
+        <div id="gallery" class="masonry" aria-live="polite"></div>
+        <div id="sentinel" class="sentinel" aria-hidden="true"></div>
 
         <div id="moreWrap" class="more-wrap is-hidden">
-          <button id="moreBtn" class="more-btn">Show more</button>
+          <button id="moreBtn" class="more-btn" type="button">Show more</button>
         </div>
       </div>
     </div>
-
   </section>
 </main>
 
@@ -112,6 +111,7 @@
   © <span id="year"></span> Anastasiia Yohansen
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
 <script src="/gallery-masonry.js"></script>
 
 <script>
