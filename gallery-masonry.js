@@ -34,26 +34,26 @@ const imageFiles = [
 ];
 
 const basePath = "/img/";
-
+const initialFillFactor = 1.02;
 const autoLoadLimit = 2;
-const firstAutoChunk = 4;
-const nextAutoChunk = 4;
-const showMoreChunk = 6;
-const revealDelay = 85;
+const firstAutoChunk = 3;
+const nextAutoChunk = 3;
+const showMoreChunk = 5;
 
 const loader = document.getElementById("loader");
 const app = document.getElementById("galleryApp");
 const gallery = document.getElementById("gallery");
+const sentinel = document.getElementById("sentinel");
 const moreWrap = document.getElementById("moreWrap");
 const moreBtn = document.getElementById("moreBtn");
 
+let backToTopBtn = null;
+let columns = [];
+let validItems = [];
 let revealIndex = 0;
 let autoLoadsUsed = 0;
 let isAppending = false;
 let galleryLightbox = null;
-let scrollTicking = false;
-
-const imageCache = new Map();
 
 function getColumnCount() {
   if (window.innerWidth <= 520) return 2;
@@ -65,38 +65,41 @@ function getColumnCount() {
   return 8;
 }
 
-function getInitialCount() {
-  const cols = getColumnCount();
+function buildColumns() {
+  if (!gallery) return;
 
-  if (cols >= 7) return 8;
-  if (cols >= 5) return 7;
-  if (cols >= 3) return 6;
-  return 4;
+  gallery.innerHTML = "";
+  columns = [];
+
+  for (let i = 0; i < getColumnCount(); i += 1) {
+    const col = document.createElement("div");
+    col.className = "masonry-column";
+    gallery.appendChild(col);
+    columns.push(col);
+  }
 }
 
-function wait(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+function shortestColumn() {
+  return columns.reduce((shortest, current) => {
+    return current.offsetHeight < shortest.offsetHeight ? current : shortest;
+  }, columns[0]);
 }
 
-function loadImage(index) {
-  if (imageCache.has(index)) return imageCache.get(index);
-
-  const src = basePath + imageFiles[index];
-
-  const promise = new Promise((resolve) => {
+function preloadImage(src) {
+  return new Promise((resolve, reject) => {
     const img = new Image();
 
-    img.onload = () => resolve(src);
-    img.onerror = () => {
-      console.warn("Missing image:", src);
-      resolve(null);
+    img.onload = () => {
+      resolve({
+        src,
+        width: img.naturalWidth,
+        height: img.naturalHeight
+      });
     };
 
+    img.onerror = () => reject(src);
     img.src = src;
   });
-
-  imageCache.set(index, promise);
-  return promise;
 }
 
 const revealObserver = new IntersectionObserver(
@@ -109,8 +112,8 @@ const revealObserver = new IntersectionObserver(
   },
   {
     root: null,
-    rootMargin: "0px 0px 14% 0px",
-    threshold: 0.06
+    rootMargin: "0px 0px 12% 0px",
+    threshold: 0.08
   }
 );
 
@@ -130,13 +133,14 @@ function initLightbox() {
   }
 }
 
-function createCard(src) {
+function createCard(item, index) {
   const card = document.createElement("a");
   card.className = "masonry-item glightbox";
-  card.href = src;
+  card.href = item.src;
+  card.dataset.index = String(index);
 
   const img = document.createElement("img");
-  img.src = src;
+  img.src = item.src;
   img.alt = "Gallery image";
   img.loading = "lazy";
   img.decoding = "async";
@@ -147,44 +151,32 @@ function createCard(src) {
   return card;
 }
 
-async function appendOne(index) {
-  if (!gallery || index >= imageFiles.length) return false;
+async function prepareItems() {
+  const results = await Promise.allSettled(
+    imageFiles.map((name) => preloadImage(basePath + name))
+  );
 
-  const src = await loadImage(index);
-  if (!src) return false;
-
-  const card = createCard(src);
-  gallery.appendChild(card);
-
-  return true;
-}
-
-function updateMoreButton() {
-  if (!moreWrap) return;
-
-  const hasMore = revealIndex < imageFiles.length;
-  const shouldShow = hasMore && autoLoadsUsed >= autoLoadLimit;
-
-  moreWrap.classList.toggle("is-hidden", !shouldShow);
-}
-
-function maybeShowAllVisibleCards() {
-  const cards = gallery.querySelectorAll(".masonry-item:not(.is-visible)");
-  cards.forEach((card) => {
-    const rect = card.getBoundingClientRect();
-    if (rect.top < window.innerHeight * 1.05) {
-      card.classList.add("is-visible");
-      revealObserver.unobserve(card);
+  validItems = [];
+  results.forEach((result) => {
+    if (result.status === "fulfilled") {
+      validItems.push(result.value);
     }
   });
 }
 
-async function appendChunk(count, delay = revealDelay) {
+function appendOne(index) {
+  const item = validItems[index];
+  if (!item || !columns.length) return false;
+
+  const card = createCard(item, index);
+  const targetColumn = shortestColumn();
+  targetColumn.appendChild(card);
+  return true;
+}
+
+async function appendChunk(count, delay = 90) {
   if (isAppending) return;
-  if (revealIndex >= imageFiles.length) {
-    updateMoreButton();
-    return;
-  }
+  if (revealIndex >= validItems.length) return;
 
   isAppending = true;
 
@@ -192,119 +184,121 @@ async function appendChunk(count, delay = revealDelay) {
     moreBtn.disabled = true;
   }
 
-  const end = Math.min(revealIndex + count, imageFiles.length);
+  const end = Math.min(revealIndex + count, validItems.length);
 
-  for (let i = revealIndex; i < end; i++) {
-    const ok = await appendOne(i);
+  for (let i = revealIndex; i < end; i += 1) {
+    const added = appendOne(i);
     revealIndex = i + 1;
 
-    if (ok) {
-      requestAnimationFrame(() => {
-        maybeShowAllVisibleCards();
-      });
-
-      if (delay > 0) {
-        await wait(delay);
-      }
+    if (added) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 
   initLightbox();
+  updateMoreButton();
 
   if (moreBtn) {
     moreBtn.disabled = false;
   }
 
   isAppending = false;
-
-  updateMoreButton();
-  maybeShowAllVisibleCards();
 }
 
-function isNearBottom() {
-  const scrollBottom = window.scrollY + window.innerHeight;
-  const docHeight = document.documentElement.scrollHeight;
-  return scrollBottom >= docHeight - 260;
+async function fillInitialViewport() {
+  while (
+    gallery &&
+    gallery.getBoundingClientRect().height < window.innerHeight * initialFillFactor &&
+    revealIndex < validItems.length
+  ) {
+    await appendChunk(2, 70);
+  }
 }
 
-async function handleAutoLoad() {
-  if (isAppending) return;
-  if (revealIndex >= imageFiles.length) {
+function updateMoreButton() {
+  if (!moreWrap) return;
+
+  const hasMore = revealIndex < validItems.length;
+  const showButton = hasMore && autoLoadsUsed >= autoLoadLimit;
+  moreWrap.classList.toggle("is-hidden", !showButton);
+}
+
+const autoObserver = new IntersectionObserver(
+  async (entries) => {
+    const entry = entries[0];
+    if (!entry || !entry.isIntersecting) return;
+    if (isAppending) return;
+    if (revealIndex >= validItems.length) {
+      updateMoreButton();
+      return;
+    }
+    if (autoLoadsUsed >= autoLoadLimit) {
+      updateMoreButton();
+      return;
+    }
+
+    autoLoadsUsed += 1;
+    await appendChunk(autoLoadsUsed === 1 ? firstAutoChunk : nextAutoChunk, 120);
     updateMoreButton();
-    return;
+  },
+  {
+    root: null,
+    rootMargin: "0px 0px 28% 0px",
+    threshold: 0
   }
-
-  if (!isNearBottom()) return;
-
-  if (autoLoadsUsed >= autoLoadLimit) {
-    updateMoreButton();
-    return;
-  }
-
-  autoLoadsUsed++;
-
-  if (autoLoadsUsed === 1) {
-    await appendChunk(firstAutoChunk, revealDelay);
-  } else {
-    await appendChunk(nextAutoChunk, revealDelay);
-  }
-
-  updateMoreButton();
-}
-
-function onScroll() {
-  if (!scrollTicking) {
-    scrollTicking = true;
-
-    requestAnimationFrame(async () => {
-      scrollTicking = false;
-      toggleBackToTop();
-      maybeShowAllVisibleCards();
-      await handleAutoLoad();
-    });
-  }
-}
-
-function onResize() {
-  maybeShowAllVisibleCards();
-}
+);
 
 function createBackToTopButton() {
-  if (document.querySelector(".back-to-top")) return;
+  if (document.querySelector(".back-to-top")) {
+    backToTopBtn = document.querySelector(".back-to-top");
+    return;
+  }
 
-  const btn = document.createElement("button");
-  btn.className = "back-to-top";
-  btn.type = "button";
-  btn.setAttribute("aria-label", "Back to top");
-  btn.innerHTML = "↑";
+  backToTopBtn = document.createElement("button");
+  backToTopBtn.className = "back-to-top";
+  backToTopBtn.type = "button";
+  backToTopBtn.setAttribute("aria-label", "Back to top");
+  backToTopBtn.innerHTML = "⌃";
 
-  btn.addEventListener("click", () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+  backToTopBtn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-  document.body.appendChild(btn);
+  document.body.appendChild(backToTopBtn);
 }
 
-function toggleBackToTop() {
-  const btn = document.querySelector(".back-to-top");
-  if (!btn) return;
-
-  if (window.scrollY > 700) {
-    btn.classList.add("is-visible");
-  } else {
-    btn.classList.remove("is-visible");
-  }
+function updateBackToTopVisibility() {
+  if (!backToTopBtn) return;
+  backToTopBtn.classList.toggle("is-visible", window.scrollY > 80);
 }
 
 if (moreBtn) {
   moreBtn.addEventListener("click", async () => {
-    await appendChunk(showMoreChunk, revealDelay);
-    updateMoreButton();
+    await appendChunk(showMoreChunk, 110);
   });
 }
+
+let resizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+
+  resizeTimer = setTimeout(() => {
+    const alreadyShown = revealIndex;
+
+    buildColumns();
+    revealIndex = 0;
+
+    for (let i = 0; i < alreadyShown; i += 1) {
+      appendOne(i);
+      revealIndex = i + 1;
+    }
+
+    initLightbox();
+    updateMoreButton();
+  }, 160);
+});
+
+window.addEventListener("scroll", updateBackToTopVisibility, { passive: true });
 
 (async function init() {
   if (!loader || !app || !gallery) {
@@ -313,27 +307,23 @@ if (moreBtn) {
   }
 
   createBackToTopButton();
-  updateMoreButton();
+  buildColumns();
+  await prepareItems();
+  await fillInitialViewport();
 
   loader.classList.add("is-hidden");
   app.classList.remove("is-hidden");
 
-  await appendChunk(getInitialCount(), 0);
+  buildColumns();
+  revealIndex = 0;
+  await fillInitialViewport();
 
   initLightbox();
-  maybeShowAllVisibleCards();
-  toggleBackToTop();
 
-  window.addEventListener("scroll", onScroll, { passive: true });
-  window.addEventListener("resize", onResize, { passive: true });
+  if (sentinel) {
+    autoObserver.observe(sentinel);
+  }
 
-  requestAnimationFrame(() => {
-    maybeShowAllVisibleCards();
-    handleAutoLoad();
-  });
-
-  setTimeout(() => {
-    maybeShowAllVisibleCards();
-    handleAutoLoad();
-  }, 250);
+  updateMoreButton();
+  updateBackToTopVisibility();
 })();
