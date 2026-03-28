@@ -36,14 +36,14 @@ const imageFiles = [
 const basePath = "/img/";
 
 const autoLoadLimit = 2;
-const firstAutoChunk = 3;
-const nextAutoChunk = 3;
-const showMoreChunk = 5;
+const firstAutoChunk = 4;
+const nextAutoChunk = 4;
+const showMoreChunk = 6;
+const revealDelay = 85;
 
 const loader = document.getElementById("loader");
 const app = document.getElementById("galleryApp");
 const gallery = document.getElementById("gallery");
-const sentinel = document.getElementById("sentinel");
 const moreWrap = document.getElementById("moreWrap");
 const moreBtn = document.getElementById("moreBtn");
 
@@ -51,6 +51,7 @@ let revealIndex = 0;
 let autoLoadsUsed = 0;
 let isAppending = false;
 let galleryLightbox = null;
+let scrollTicking = false;
 
 const imageCache = new Map();
 
@@ -66,10 +67,15 @@ function getColumnCount() {
 
 function getInitialCount() {
   const cols = getColumnCount();
-  if (cols >= 7) return 7;
-  if (cols >= 5) return 6;
-  if (cols >= 3) return 5;
+
+  if (cols >= 7) return 8;
+  if (cols >= 5) return 7;
+  if (cols >= 3) return 6;
   return 4;
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function loadImage(index) {
@@ -103,8 +109,8 @@ const revealObserver = new IntersectionObserver(
   },
   {
     root: null,
-    rootMargin: "0px 0px 12% 0px",
-    threshold: 0.08
+    rootMargin: "0px 0px 14% 0px",
+    threshold: 0.06
   }
 );
 
@@ -162,7 +168,18 @@ function updateMoreButton() {
   moreWrap.classList.toggle("is-hidden", !shouldShow);
 }
 
-async function appendChunk(count, delay = 80) {
+function maybeShowAllVisibleCards() {
+  const cards = gallery.querySelectorAll(".masonry-item:not(.is-visible)");
+  cards.forEach((card) => {
+    const rect = card.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 1.05) {
+      card.classList.add("is-visible");
+      revealObserver.unobserve(card);
+    }
+  });
+}
+
+async function appendChunk(count, delay = revealDelay) {
   if (isAppending) return;
   if (revealIndex >= imageFiles.length) {
     updateMoreButton();
@@ -181,8 +198,14 @@ async function appendChunk(count, delay = 80) {
     const ok = await appendOne(i);
     revealIndex = i + 1;
 
-    if (ok && delay > 0) {
-      await new Promise((resolve) => setTimeout(resolve, delay));
+    if (ok) {
+      requestAnimationFrame(() => {
+        maybeShowAllVisibleCards();
+      });
+
+      if (delay > 0) {
+        await wait(delay);
+      }
     }
   }
 
@@ -193,53 +216,92 @@ async function appendChunk(count, delay = 80) {
   }
 
   isAppending = false;
+
+  updateMoreButton();
+  maybeShowAllVisibleCards();
+}
+
+function isNearBottom() {
+  const scrollBottom = window.scrollY + window.innerHeight;
+  const docHeight = document.documentElement.scrollHeight;
+  return scrollBottom >= docHeight - 260;
+}
+
+async function handleAutoLoad() {
+  if (isAppending) return;
+  if (revealIndex >= imageFiles.length) {
+    updateMoreButton();
+    return;
+  }
+
+  if (!isNearBottom()) return;
+
+  if (autoLoadsUsed >= autoLoadLimit) {
+    updateMoreButton();
+    return;
+  }
+
+  autoLoadsUsed++;
+
+  if (autoLoadsUsed === 1) {
+    await appendChunk(firstAutoChunk, revealDelay);
+  } else {
+    await appendChunk(nextAutoChunk, revealDelay);
+  }
+
   updateMoreButton();
 }
 
-const autoObserver = new IntersectionObserver(
-  async (entries) => {
-    const entry = entries[0];
-    if (!entry || !entry.isIntersecting) return;
-    if (isAppending) return;
-    if (revealIndex >= imageFiles.length) {
-      updateMoreButton();
-      autoObserver.unobserve(sentinel);
-      return;
-    }
+function onScroll() {
+  if (!scrollTicking) {
+    scrollTicking = true;
 
-    if (autoLoadsUsed >= autoLoadLimit) {
-      updateMoreButton();
-      autoObserver.unobserve(sentinel);
-      return;
-    }
-
-    autoLoadsUsed++;
-
-    if (autoLoadsUsed === 1) {
-      await appendChunk(firstAutoChunk, 80);
-    } else {
-      await appendChunk(nextAutoChunk, 80);
-    }
-
-    updateMoreButton();
-
-    if (autoLoadsUsed >= autoLoadLimit && sentinel) {
-      autoObserver.unobserve(sentinel);
-      requestAnimationFrame(() => {
-        updateMoreButton();
-      });
-    }
-  },
-  {
-    root: null,
-    rootMargin: "0px 0px 35% 0px",
-    threshold: 0
+    requestAnimationFrame(async () => {
+      scrollTicking = false;
+      toggleBackToTop();
+      maybeShowAllVisibleCards();
+      await handleAutoLoad();
+    });
   }
-);
+}
+
+function onResize() {
+  maybeShowAllVisibleCards();
+}
+
+function createBackToTopButton() {
+  if (document.querySelector(".back-to-top")) return;
+
+  const btn = document.createElement("button");
+  btn.className = "back-to-top";
+  btn.type = "button";
+  btn.setAttribute("aria-label", "Back to top");
+  btn.innerHTML = "↑";
+
+  btn.addEventListener("click", () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  });
+
+  document.body.appendChild(btn);
+}
+
+function toggleBackToTop() {
+  const btn = document.querySelector(".back-to-top");
+  if (!btn) return;
+
+  if (window.scrollY > 700) {
+    btn.classList.add("is-visible");
+  } else {
+    btn.classList.remove("is-visible");
+  }
+}
 
 if (moreBtn) {
   moreBtn.addEventListener("click", async () => {
-    await appendChunk(showMoreChunk, 80);
+    await appendChunk(showMoreChunk, revealDelay);
     updateMoreButton();
   });
 }
@@ -250,24 +312,28 @@ if (moreBtn) {
     return;
   }
 
+  createBackToTopButton();
   updateMoreButton();
-
-  await appendChunk(getInitialCount(), 0);
 
   loader.classList.add("is-hidden");
   app.classList.remove("is-hidden");
 
-  initLightbox();
+  await appendChunk(getInitialCount(), 0);
 
-  if (sentinel) {
-    autoObserver.observe(sentinel);
-  }
+  initLightbox();
+  maybeShowAllVisibleCards();
+  toggleBackToTop();
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onResize, { passive: true });
 
   requestAnimationFrame(() => {
-    updateMoreButton();
+    maybeShowAllVisibleCards();
+    handleAutoLoad();
   });
 
   setTimeout(() => {
-    updateMoreButton();
-  }, 120);
+    maybeShowAllVisibleCards();
+    handleAutoLoad();
+  }, 250);
 })();
