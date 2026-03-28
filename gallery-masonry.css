@@ -54,9 +54,8 @@
   text-decoration: none;
   background: #ecece7;
   opacity: 0;
-  transform: translateY(12px);
-  transition: opacity .35s ease, transform .35s ease;
-  will-change: opacity, transform;
+  transform: translateY(18px);
+  transition: opacity .55s ease, transform .55s ease;
 }
 
 .gallery .masonry-item.is-visible {
