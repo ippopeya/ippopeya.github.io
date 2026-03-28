@@ -312,16 +312,32 @@ function updateMoreButton() {
   moreWrap?.classList.toggle("is-hidden", !showButton);
 }
 
+async function maybeFinishAutoLoadCycle() {
+  if (autoLoadsUsed < autoLoadLimit) return;
+  if (!sentinel || revealIndex >= validItems.length) return;
+
+  const rect = sentinel.getBoundingClientRect();
+  const threshold = window.innerHeight * 1.15;
+
+  if (rect.top <= threshold) {
+    updateMoreButton();
+  }
+}
+
 const autoObserver = new IntersectionObserver(
   async (entries) => {
     const entry = entries[0];
     if (!entry.isIntersecting) return;
     if (isAppending) return;
     if (revealIndex >= validItems.length) return;
-    if (autoLoadsUsed >= autoLoadLimit) return;
+    if (autoLoadsUsed >= autoLoadLimit) {
+      updateMoreButton();
+      return;
+    }
 
     autoLoadsUsed += 1;
     await appendChunk(autoLoadsUsed === 1 ? firstAutoChunk : nextAutoChunk, 120);
+    await maybeFinishAutoLoadCycle();
     updateMoreButton();
   },
   {
@@ -352,6 +368,7 @@ function updateBackToTopVisibility() {
 
 moreBtn?.addEventListener("click", async () => {
   await appendChunk(showMoreChunk, 110);
+  updateMoreButton();
 });
 
 let resizeTimer = null;
@@ -397,6 +414,16 @@ window.addEventListener("scroll", updateBackToTopVisibility, { passive: true });
   buildColumns();
   revealIndex = 0;
   await fillInitialViewport();
+
+  autoObserver.observe(sentinel);
+  updateMoreButton();
+  updateBackToTopVisibility();
+  await maybeFinishAutoLoadCycle();
+})();
+
+window.addEventListener("load", () => {
+  updateMoreButton();
+});
 
   autoObserver.observe(sentinel);
   updateMoreButton();
