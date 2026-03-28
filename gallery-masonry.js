@@ -79,18 +79,14 @@ function buildColumns() {
   gallery.innerHTML = "";
   columns = [];
 
-  for (let i = 0; i < getColumnCount(); i += 1) {
+  const columnCount = getColumnCount();
+
+  for (let i = 0; i < columnCount; i += 1) {
     const col = document.createElement("div");
     col.className = "masonry-column";
     gallery.appendChild(col);
     columns.push(col);
   }
-}
-
-function shortestColumn() {
-  return columns.reduce((shortest, current) => {
-    return current.offsetHeight < shortest.offsetHeight ? current : shortest;
-  }, columns[0]);
 }
 
 function loadImage(index) {
@@ -164,6 +160,17 @@ function createCard(src) {
   return card;
 }
 
+/**
+ * ВАЖНО:
+ * больше не пытаемся вычислять "самую низкую" колонку по offsetHeight
+ * до загрузки картинки. Это и ломало раскладку.
+ * Вместо этого используем стабильную round-robin раскладку.
+ */
+function getTargetColumn(index) {
+  if (!columns.length) return null;
+  return columns[index % columns.length];
+}
+
 async function appendOne(index) {
   if (!columns.length || index >= imageFiles.length) return false;
 
@@ -171,9 +178,10 @@ async function appendOne(index) {
   if (!item) return false;
 
   const card = createCard(item.src);
-  const targetColumn = shortestColumn();
-  targetColumn.appendChild(card);
+  const targetColumn = getTargetColumn(index);
+  if (!targetColumn) return false;
 
+  targetColumn.appendChild(card);
   return true;
 }
 
