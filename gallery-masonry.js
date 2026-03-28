@@ -33,7 +33,7 @@ const imageFiles = [
   "mix_terrier_closeup.jpg"
 ];
 
-const basePath = "../../Img/";
+const basePath = "/img/";
 const initialFillFactor = 1.02;
 const autoLoadLimit = 2;
 const firstAutoChunk = 3;
