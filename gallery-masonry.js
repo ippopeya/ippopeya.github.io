@@ -34,7 +34,6 @@ const imageFiles = [
 ];
 
 const basePath = "/img/";
-const initialFillFactor = 1.02;
 const autoLoadLimit = 2;
 const firstAutoChunk = 3;
 const nextAutoChunk = 3;
@@ -54,8 +53,7 @@ let autoLoadsUsed = 0;
 let isAppending = false;
 let galleryLightbox = null;
 
-const itemPromiseCache = new Map();
-const loadedItems = [];
+const itemCache = new Map();
 
 function getColumnCount() {
   if (window.innerWidth <= 520) return 2;
@@ -65,6 +63,11 @@ function getColumnCount() {
   if (window.innerWidth <= 1550) return 6;
   if (window.innerWidth <= 1800) return 7;
   return 8;
+}
+
+function getInitialCount() {
+  const cols = getColumnCount();
+  return Math.min(Math.max(cols + 1, 4), 8);
 }
 
 function buildColumns() {
@@ -87,44 +90,25 @@ function shortestColumn() {
   }, columns[0]);
 }
 
-function preloadImage(src) {
-  return new Promise((resolve, reject) => {
+function loadImage(index) {
+  if (itemCache.has(index)) {
+    return itemCache.get(index);
+  }
+
+  const src = basePath + imageFiles[index];
+
+  const promise = new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () =>
-      resolve({
-        src,
-        width: img.naturalWidth,
-        height: img.naturalHeight
-      });
-    img.onerror = () => reject(src);
+    img.onload = () => resolve({ src });
+    img.onerror = () => reject(new Error(`Missing image: ${src}`));
     img.src = src;
+  }).catch((error) => {
+    console.warn(error.message);
+    return null;
   });
-}
 
-function getItem(index) {
-  if (itemPromiseCache.has(index)) {
-    return itemPromiseCache.get(index);
-  }
-
-  const promise = preloadImage(basePath + imageFiles[index])
-    .then((item) => {
-      loadedItems[index] = item;
-      return item;
-    })
-    .catch((src) => {
-      console.warn("Missing image:", imageFiles[index], src);
-      return null;
-    });
-
-  itemPromiseCache.set(index, promise);
+  itemCache.set(index, promise);
   return promise;
-}
-
-function preloadAhead(fromIndex, count = 6) {
-  const end = Math.min(fromIndex + count, imageFiles.length);
-  for (let i = fromIndex; i < end; i += 1) {
-    getItem(i);
-  }
 }
 
 const revealObserver = new IntersectionObserver(
@@ -158,13 +142,13 @@ function initLightbox() {
   });
 }
 
-function createCard(item) {
+function createCard(src) {
   const card = document.createElement("a");
   card.className = "masonry-item glightbox";
-  card.href = item.src;
+  card.href = src;
 
   const img = document.createElement("img");
-  img.src = item.src;
+  img.src = src;
   img.alt = "Gallery image";
   img.loading = "lazy";
   img.decoding = "async";
@@ -178,36 +162,20 @@ function createCard(item) {
 async function appendOne(index) {
   if (!columns.length || index >= imageFiles.length) return false;
 
-  const item = await getItem(index);
+  const item = await loadImage(index);
   if (!item) return false;
 
-  const card = createCard(item);
+  const card = createCard(item.src);
   const targetColumn = shortestColumn();
   targetColumn.appendChild(card);
+
   return true;
 }
 
-function updateMoreButton(forceShow = false) {
+function updateMoreButton() {
   const hasMore = revealIndex < imageFiles.length;
-  const shouldShow = hasMore && (forceShow || autoLoadsUsed >= autoLoadLimit);
+  const shouldShow = hasMore && autoLoadsUsed >= autoLoadLimit;
   moreWrap?.classList.toggle("is-hidden", !shouldShow);
-}
-
-function refreshButtonImmediatelyIfNeeded() {
-  if (!sentinel || !moreWrap) return;
-
-  const hasMore = revealIndex < imageFiles.length;
-  if (!hasMore) {
-    updateMoreButton(false);
-    return;
-  }
-
-  if (autoLoadsUsed < autoLoadLimit) {
-    updateMoreButton(false);
-    return;
-  }
-
-  updateMoreButton(true);
 }
 
 async function appendChunk(count, delay = 90) {
@@ -225,25 +193,14 @@ async function appendChunk(count, delay = 90) {
 
     if (appended) {
       initLightbox();
-      preloadAhead(revealIndex, 6);
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 
-  refreshButtonImmediatelyIfNeeded();
+  updateMoreButton();
 
   if (moreBtn) moreBtn.disabled = false;
   isAppending = false;
-}
-
-async function fillInitialViewport() {
-  while (
-    gallery &&
-    gallery.getBoundingClientRect().height < window.innerHeight * initialFillFactor &&
-    revealIndex < imageFiles.length
-  ) {
-    await appendChunk(2, 60);
-  }
 }
 
 const autoObserver = new IntersectionObserver(
@@ -254,13 +211,13 @@ const autoObserver = new IntersectionObserver(
     if (revealIndex >= imageFiles.length) return;
 
     if (autoLoadsUsed >= autoLoadLimit) {
-      refreshButtonImmediatelyIfNeeded();
+      updateMoreButton();
       return;
     }
 
     autoLoadsUsed += 1;
     await appendChunk(autoLoadsUsed === 1 ? firstAutoChunk : nextAutoChunk, 110);
-    refreshButtonImmediatelyIfNeeded();
+    updateMoreButton();
   },
   {
     root: null,
@@ -290,7 +247,7 @@ function updateBackToTopVisibility() {
 
 moreBtn?.addEventListener("click", async () => {
   await appendChunk(showMoreChunk, 100);
-  refreshButtonImmediatelyIfNeeded();
+  updateMoreButton();
 });
 
 let resizeTimer = null;
@@ -298,6 +255,7 @@ window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(async () => {
     const alreadyShown = revealIndex;
+
     buildColumns();
     revealIndex = 0;
 
@@ -307,14 +265,18 @@ window.addEventListener("resize", () => {
     }
 
     initLightbox();
-    refreshButtonImmediatelyIfNeeded();
+    updateMoreButton();
   }, 160);
 });
 
-window.addEventListener("scroll", () => {
-  updateBackToTopVisibility();
-  refreshButtonImmediatelyIfNeeded();
-}, { passive: true });
+window.addEventListener(
+  "scroll",
+  () => {
+    updateBackToTopVisibility();
+    updateMoreButton();
+  },
+  { passive: true }
+);
 
 (async function init() {
   if (!loader || !app || !gallery || !sentinel || !moreWrap || !moreBtn) {
@@ -325,8 +287,7 @@ window.addEventListener("scroll", () => {
   createBackToTopButton();
   buildColumns();
 
-  preloadAhead(0, 10);
-  await fillInitialViewport();
+  await appendChunk(getInitialCount(), 60);
 
   if (!revealIndex) {
     console.error("No gallery images loaded. Check /img/ paths and filenames.");
@@ -336,22 +297,7 @@ window.addEventListener("scroll", () => {
   loader.classList.add("is-hidden");
   app.classList.remove("is-hidden");
 
-  buildColumns();
-  const initialShown = revealIndex;
-  revealIndex = 0;
-
-  for (let i = 0; i < initialShown; i += 1) {
-    await appendOne(i);
-    revealIndex = i + 1;
-  }
-
-  initLightbox();
   autoObserver.observe(sentinel);
   updateBackToTopVisibility();
-  refreshButtonImmediatelyIfNeeded();
-  preloadAhead(revealIndex, 10);
+  updateMoreButton();
 })();
-
-window.addEventListener("load", () => {
-  refreshButtonImmediatelyIfNeeded();
-});
