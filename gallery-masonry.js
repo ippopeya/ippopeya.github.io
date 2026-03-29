@@ -205,7 +205,7 @@ function initLightbox() {
       draggable: true,
       openEffect: "none",
       closeEffect: "none",
-      slideEffect: "none"
+      slideEffect: "slide"
     });
   }
 }
