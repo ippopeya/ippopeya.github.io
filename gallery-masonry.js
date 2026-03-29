@@ -34,16 +34,11 @@ const imageFiles = [
 ];
 
 const basePath = "/img/";
-
+const initialFillFactor = 1.02;
 const autoLoadLimit = 2;
 const firstAutoChunk = 3;
 const nextAutoChunk = 3;
 const showMoreChunk = 5;
-
-const initialFillFactor = 1.02;
-const revealDelayInitial = 35;
-const revealDelayAuto = 65;
-const revealDelayMore = 75;
 
 const loader = document.getElementById("loader");
 const app = document.getElementById("galleryApp");
@@ -53,18 +48,12 @@ const moreWrap = document.getElementById("moreWrap");
 const moreBtn = document.getElementById("moreBtn");
 
 let backToTopBtn = null;
-let galleryLightbox = null;
-
+let columns = [];
+let validItems = [];
 let revealIndex = 0;
 let autoLoadsUsed = 0;
 let isAppending = false;
-let scrollTicking = false;
-
-const imageCache = new Map();
-
-function wait(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+let galleryLightbox = null;
 
 function getColumnCount() {
   if (window.innerWidth <= 520) return 2;
@@ -76,20 +65,26 @@ function getColumnCount() {
   return 8;
 }
 
-function getInitialCount() {
-  const cols = getColumnCount();
-  if (cols >= 7) return 7;
-  if (cols >= 5) return 6;
-  if (cols >= 3) return 5;
-  return 4;
+function buildColumns() {
+  gallery.innerHTML = "";
+  columns = [];
+
+  for (let i = 0; i < getColumnCount(); i += 1) {
+    const col = document.createElement("div");
+    col.className = "masonry-column";
+    gallery.appendChild(col);
+    columns.push(col);
+  }
 }
 
-function loadImage(index) {
-  if (imageCache.has(index)) return imageCache.get(index);
+function shortestColumn() {
+  return columns.reduce((shortest, current) => {
+    return current.offsetHeight < shortest.offsetHeight ? current : shortest;
+  }, columns[0]);
+}
 
-  const src = basePath + imageFiles[index];
-
-  const promise = new Promise((resolve) => {
+function preloadImage(src) {
+  return new Promise((resolve, reject) => {
     const img = new Image();
 
     img.onload = () => {
@@ -100,16 +95,9 @@ function loadImage(index) {
       });
     };
 
-    img.onerror = () => {
-      console.warn("Missing image:", src);
-      resolve(null);
-    };
-
+    img.onerror = () => reject(src);
     img.src = src;
   });
-
-  imageCache.set(index, promise);
-  return promise;
 }
 
 const revealObserver = new IntersectionObserver(
@@ -126,6 +114,22 @@ const revealObserver = new IntersectionObserver(
     threshold: 0.08
   }
 );
+
+function initLightbox() {
+  if (typeof GLightbox !== "function") return;
+
+  if (!galleryLightbox) {
+    galleryLightbox = GLightbox({
+      selector: ".gallery .glightbox",
+      touchNavigation: true,
+      loop: true,
+      zoomable: false,
+      draggable: true
+    });
+  } else {
+    galleryLightbox.reload();
+  }
+}
 
 function createCard(item, index) {
   const card = document.createElement("a");
@@ -145,86 +149,31 @@ function createCard(item, index) {
   return card;
 }
 
-function initLightbox() {
-  if (typeof GLightbox !== "function") return;
+async function prepareItems() {
+  const results = await Promise.allSettled(
+    imageFiles.map((name) => preloadImage(basePath + name))
+  );
 
-  if (!galleryLightbox) {
-    galleryLightbox = GLightbox({
-      selector: ".gallery .glightbox",
-      touchNavigation: true,
-      loop: true,
-      zoomable: false,
-      draggable: true
-    });
-  } else {
-    galleryLightbox.reload();
-  }
-}
-
-function updateMoreButton() {
-  if (!moreWrap) return;
-
-  const hasMore = revealIndex < imageFiles.length;
-  const shouldShow = hasMore && autoLoadsUsed >= autoLoadLimit;
-
-  moreWrap.classList.toggle("is-hidden", !shouldShow);
-}
-
-function createBackToTopButton() {
-  const existing = document.querySelector(".back-to-top");
-
-  if (existing) {
-    backToTopBtn = existing;
-    return;
-  }
-
-  backToTopBtn = document.createElement("button");
-  backToTopBtn.className = "back-to-top";
-  backToTopBtn.type = "button";
-  backToTopBtn.setAttribute("aria-label", "Back to top");
-  backToTopBtn.innerHTML = "⌃";
-
-  backToTopBtn.addEventListener("click", () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+  validItems = [];
+  results.forEach((result) => {
+    if (result.status === "fulfilled") {
+      validItems.push(result.value);
+    }
   });
-
-  document.body.appendChild(backToTopBtn);
 }
 
-function updateBackToTopVisibility() {
-  if (!backToTopBtn) return;
-
-  const isMobile = window.innerWidth <= 760;
-
-  if (isMobile) {
-    backToTopBtn.classList.remove("is-visible");
-    return;
-  }
-
-  backToTopBtn.classList.toggle("is-visible", window.scrollY > 220);
-}
-
-async function appendOne(index) {
-  if (!gallery || index >= imageFiles.length) return false;
-
-  const item = await loadImage(index);
-  if (!item) return false;
+function appendOne(index) {
+  const item = validItems[index];
+  if (!item) return;
 
   const card = createCard(item, index);
-  gallery.appendChild(card);
-
-  return true;
+  const targetColumn = shortestColumn();
+  targetColumn.appendChild(card);
 }
 
-async function appendChunk(count, delay) {
+async function appendChunk(count, delay = 90) {
   if (isAppending) return;
-  if (revealIndex >= imageFiles.length) {
-    updateMoreButton();
-    return;
-  }
+  if (revealIndex >= validItems.length) return;
 
   isAppending = true;
 
@@ -232,18 +181,14 @@ async function appendChunk(count, delay) {
     moreBtn.disabled = true;
   }
 
-  const end = Math.min(revealIndex + count, imageFiles.length);
+  const end = Math.min(revealIndex + count, validItems.length);
 
   for (let i = revealIndex; i < end; i += 1) {
-    const added = await appendOne(i);
+    appendOne(i);
     revealIndex = i + 1;
-
-    if (added && delay > 0) {
-      await wait(delay);
-    }
+    await new Promise((resolve) => setTimeout(resolve, delay));
   }
 
-  initLightbox();
   updateMoreButton();
 
   if (moreBtn) {
@@ -251,113 +196,114 @@ async function appendChunk(count, delay) {
   }
 
   isAppending = false;
+  initLightbox();
 }
 
 async function fillInitialViewport() {
   while (
-    gallery &&
     gallery.getBoundingClientRect().height < window.innerHeight * initialFillFactor &&
-    revealIndex < imageFiles.length
+    revealIndex < validItems.length
   ) {
-    await appendChunk(2, revealDelayInitial);
+    await appendChunk(2, 70);
   }
 }
 
-function canScrollPage() {
-  return document.documentElement.scrollHeight > window.innerHeight + 40;
+function updateMoreButton() {
+  const hasMore = revealIndex < validItems.length;
+  const showButton = hasMore && autoLoadsUsed >= autoLoadLimit;
+  moreWrap.classList.toggle("is-hidden", !showButton);
 }
 
-function isNearBottom() {
-  const scrollBottom = window.scrollY + window.innerHeight;
-  const docHeight = document.documentElement.scrollHeight;
-  return scrollBottom >= docHeight - 260;
-}
+const autoObserver = new IntersectionObserver(
+  async (entries) => {
+    const entry = entries[0];
+    if (!entry.isIntersecting) return;
+    if (isAppending) return;
+    if (revealIndex >= validItems.length) return;
+    if (autoLoadsUsed >= autoLoadLimit) return;
 
-async function tryAutoLoad() {
-  if (isAppending) return;
-  if (revealIndex >= imageFiles.length) {
+    autoLoadsUsed += 1;
+    await appendChunk(autoLoadsUsed === 1 ? firstAutoChunk : nextAutoChunk, 120);
     updateMoreButton();
-    return;
+  },
+  {
+    root: null,
+    rootMargin: "0px 0px 28% 0px",
+    threshold: 0
   }
+);
 
-  if (autoLoadsUsed >= autoLoadLimit) {
-    updateMoreButton();
-    return;
-  }
+function createBackToTopButton() {
+  backToTopBtn = document.createElement("button");
+  backToTopBtn.className = "back-to-top";
+  backToTopBtn.type = "button";
+  backToTopBtn.setAttribute("aria-label", "Back to top");
+  backToTopBtn.innerHTML = "⌃";
 
-  if (!isNearBottom() && canScrollPage()) return;
-
-  autoLoadsUsed += 1;
-
-  if (autoLoadsUsed === 1) {
-    await appendChunk(firstAutoChunk, revealDelayAuto);
-  } else {
-    await appendChunk(nextAutoChunk, revealDelayAuto);
-  }
-
-  updateMoreButton();
-
-  if (!canScrollPage() && autoLoadsUsed < autoLoadLimit) {
-    await tryAutoLoad();
-  }
-}
-
-function onScroll() {
-  if (scrollTicking) return;
-
-  scrollTicking = true;
-
-  requestAnimationFrame(async () => {
-    scrollTicking = false;
-    updateBackToTopVisibility();
-    await tryAutoLoad();
+  backToTopBtn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
   });
+
+  document.body.appendChild(backToTopBtn);
+}
+
+function updateBackToTopVisibility() {
+  if (!backToTopBtn) return;
+  backToTopBtn.classList.toggle("is-visible", window.scrollY > 80);
 }
 
 if (moreBtn) {
   moreBtn.addEventListener("click", async () => {
-    await appendChunk(showMoreChunk, revealDelayMore);
-    updateMoreButton();
+    await appendChunk(showMoreChunk, 110);
   });
 }
 
-window.addEventListener("scroll", onScroll, { passive: true });
+let resizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+
+  resizeTimer = setTimeout(() => {
+    const alreadyShown = revealIndex;
+
+    buildColumns();
+    revealIndex = 0;
+
+    for (let i = 0; i < alreadyShown; i += 1) {
+      appendOne(i);
+      revealIndex = i + 1;
+    }
+
+    updateMoreButton();
+    initLightbox();
+  }, 160);
+});
+
+window.addEventListener("scroll", updateBackToTopVisibility, { passive: true });
 
 (async function init() {
-  if (!loader || !app || !gallery) {
+  if (!loader || !app || !gallery || !moreWrap || !moreBtn) {
     console.error("Gallery elements missing");
     return;
   }
 
   createBackToTopButton();
-  updateMoreButton();
+  buildColumns();
+  await prepareItems();
+  await fillInitialViewport();
 
   loader.classList.add("is-hidden");
   app.classList.remove("is-hidden");
 
-  await appendChunk(getInitialCount(), revealDelayInitial);
+  buildColumns();
+  revealIndex = 0;
   await fillInitialViewport();
 
   initLightbox();
-  updateBackToTopVisibility();
 
   if (sentinel) {
-    const sentinelObserver = new IntersectionObserver(
-      async (entries) => {
-        const entry = entries[0];
-        if (!entry || !entry.isIntersecting) return;
-        await tryAutoLoad();
-      },
-      {
-        root: null,
-        rootMargin: "0px 0px 28% 0px",
-        threshold: 0
-      }
-    );
-
-    sentinelObserver.observe(sentinel);
+    autoObserver.observe(sentinel);
   }
 
-  await tryAutoLoad();
   updateMoreButton();
+  updateBackToTopVisibility();
 })();
