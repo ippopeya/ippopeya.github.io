@@ -195,12 +195,12 @@
 
 @media (max-width: 760px) {
   .gallery .gallery-shell {
-    width: min(100% - 14px, 1200px);
+    width: calc(100% - 12px);
     padding-top: 6px;
   }
 
   .gallery .masonry {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
   }
 
@@ -219,7 +219,7 @@
 
 @media (max-width: 520px) {
   .gallery .gallery-shell {
-    width: min(100% - 10px, 900px);
+    width: calc(100% - 10px);
     padding-top: 4px;
   }
 
