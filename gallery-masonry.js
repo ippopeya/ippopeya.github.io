@@ -59,6 +59,10 @@ const moreBtn = document.getElementById("moreBtn");
 
 let backToTopBtn = null;
 let galleryLightbox = null;
+const lightboxElements = imageFiles.map((file) => ({
+  href: basePath + file,
+  type: "image"
+}));
 
 let columns = [];
 let shownItems = [];
@@ -194,7 +198,7 @@ function initLightbox() {
 
   if (!galleryLightbox) {
     galleryLightbox = GLightbox({
-      selector: ".gallery .glightbox",
+      elements: lightboxElements,
       touchNavigation: true,
       loop: true,
       zoomable: false,
@@ -203,14 +207,12 @@ function initLightbox() {
       closeEffect: "none",
       slideEffect: "none"
     });
-  } else {
-    galleryLightbox.reload();
   }
 }
 
 function createCard(meta) {
   const card = document.createElement("a");
-  card.className = "masonry-item glightbox";
+  card.className = "masonry-item";
   card.href = meta.src;
   card.dataset.index = String(meta.index);
 
@@ -221,6 +223,19 @@ function createCard(meta) {
   img.decoding = "async";
 
   card.appendChild(img);
+
+  card.addEventListener("click", (event) => {
+    event.preventDefault();
+
+    if (!galleryLightbox) {
+      initLightbox();
+    }
+
+    if (galleryLightbox) {
+      galleryLightbox.openAt(meta.index);
+    }
+  });
+
   revealObserver.observe(card);
 
   return card;
@@ -356,7 +371,9 @@ function canScrollPage() {
 function isNearBottom() {
   const scrollBottom = window.scrollY + window.innerHeight;
   const docHeight = document.documentElement.scrollHeight;
-  return scrollBottom >= docHeight - 260;
+  const preloadOffset = Math.max(700, window.innerHeight * 0.9);
+
+  return scrollBottom >= docHeight - preloadOffset;
 }
 
 async function tryAutoLoad() {
