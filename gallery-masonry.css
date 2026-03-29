@@ -239,3 +239,13 @@
     font-size: 24px;
   }
 }
+
+@media (max-width: 760px) {
+  .back-to-top {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+    right: 10px;
+    bottom: 10px;
+  }
+}
