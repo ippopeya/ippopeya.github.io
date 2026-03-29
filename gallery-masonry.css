@@ -272,3 +272,62 @@
   }
 
 }
+/* =========================
+   MOBILE FULLSCREEN SWIPE TUNING
+   ========================= */
+
+@media (hover: none) and (pointer: coarse) {
+
+  /* убираем любое затемнение/прозрачность */
+  .glightbox-container .gslide,
+  .glightbox-container .gslide-image {
+    opacity: 1 !important;
+  }
+
+  /* отключаем fade/opacity-анимации */
+  .glightbox-container .gslide-media,
+  .glightbox-container .gslide-image,
+  .glightbox-container .gslide-image img {
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1) !important;
+    animation: none !important;
+  }
+
+  /* убираем любые "вспышки" и наложения */
+  .glightbox-container .gslide {
+    background: transparent !important;
+  }
+
+  /* важно: чтобы картинки не накладывались */
+  .glightbox-container .ginner-container {
+    overflow: hidden !important;
+  }
+
+}
+@media (hover: none) and (pointer: coarse) {
+  .glightbox-container .gslide {
+    opacity: 1 !important;
+  }
+
+  .glightbox-container .ginner-container {
+    overflow: hidden !important;
+  }
+
+  .glightbox-container .gslide.prev {
+    transform: translateX(-100%) !important;
+  }
+
+  .glightbox-container .gslide.next {
+    transform: translateX(100%) !important;
+  }
+
+  .glightbox-container .gslide.current {
+    transform: translateX(0) !important;
+  }
+
+  .glightbox-container .gslide-media,
+  .glightbox-container .gslide-image,
+  .glightbox-container .gslide-image img {
+    animation: none !important;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+}
