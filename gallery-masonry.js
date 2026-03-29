@@ -371,7 +371,7 @@ function canScrollPage() {
 function isNearBottom() {
   const scrollBottom = window.scrollY + window.innerHeight;
   const docHeight = document.documentElement.scrollHeight;
-  const preloadOffset = Math.max(700, window.innerHeight * 0.9);
+  const preloadOffset = Math.max(520, window.innerHeight * 0.68);
 
   return scrollBottom >= docHeight - preloadOffset;
 }
