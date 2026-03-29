@@ -288,12 +288,12 @@ main:has(.gallery) .gallery .gallery-shell {
 
 @media (max-width: 760px) {
   main:has(.gallery) .gallery .gallery-shell {
-    width: calc(100% - 12px) !important;
+    width: calc(100% - 10px) !important;
   }
 }
 
 @media (max-width: 520px) {
   main:has(.gallery) .gallery .gallery-shell {
-    width: calc(100% - 12px) !important;
+    width: calc(100% - 10px) !important;
   }
 }
