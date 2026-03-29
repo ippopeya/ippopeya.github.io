@@ -3,22 +3,22 @@ const imageFiles = [
   "IMG_1356.jpg",
   "mix_terrier_closeup.jpg",
   "IMG_1387.jpg",
+  "IMG_9753.jpg",
   "IMG_1447.jpg",
   "IMG_2746.jpg",
+  "IMG_9796.jpg",
   "IMG_2748.jpg",
   "IMG_2749.jpg",
   "IMG_3009.jpg",
   "IMG_3040.jpg",
   "IMG_3309.jpg",
+  "IMG_9910.jpg",
   "IMG_3522.jpg",
   "IMG_3719.jpg",
   "IMG_3985.jpg",
   "IMG_7695.jpg",
   "IMG_7745.jpg",
-  "IMG_9753.jpg",
-  "IMG_9782.jpg",
-  "IMG_9796.jpg",
-  "IMG_9910.jpg"
+  "IMG_9782.jpg"
 ];
 
 const basePath = "/img/";
