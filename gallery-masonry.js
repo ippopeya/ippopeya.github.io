@@ -22,6 +22,7 @@ const imageFiles = [
 ];
 
 const basePath = "/img/";
+const currentLang = window.location.pathname.startsWith("/gr/") ? "gr" : "en";
 
 const autoLoadLimit = 2;
 const firstAutoChunk = 4;
@@ -137,7 +138,8 @@ function getShortestColumnByHeights(heights) {
 function loadImageMeta(index) {
   if (imageCache.has(index)) return imageCache.get(index);
 
-  const src = basePath + imageFiles[index];
+  const imageData = imageFiles[index];
+  const src = basePath + imageData.file;
 
   const promise = new Promise((resolve) => {
     const img = new Image();
@@ -148,7 +150,8 @@ function loadImageMeta(index) {
         src,
         width: img.naturalWidth,
         height: img.naturalHeight,
-        ratio: img.naturalWidth / img.naturalHeight
+        ratio: img.naturalWidth / img.naturalHeight,
+        alt: imageData.alt
       });
     };
 
@@ -204,7 +207,7 @@ function createCard(meta) {
 
   const img = document.createElement("img");
   img.src = meta.src;
-  img.alt = "Gallery image";
+  img.alt = meta.alt?.[currentLang] || meta.alt?.en || "";
   img.loading = "lazy";
   img.decoding = "async";
 
