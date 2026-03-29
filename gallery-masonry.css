@@ -249,3 +249,18 @@
     bottom: 10px;
   }
 }
+
+/* force no fade/slide animation in fullscreen on all devices */
+.glightbox-container .gslide,
+.glightbox-container .ginner-container,
+.glightbox-container .gslide-media,
+.glightbox-container .gslide-image,
+.glightbox-container .gslide-image img,
+.glightbox-mobile .gslide,
+.glightbox-mobile .ginner-container,
+.glightbox-mobile .gslide-media,
+.glightbox-mobile .gslide-image,
+.glightbox-mobile .gslide-image img {
+  animation: none !important;
+  transition: none !important;
+}
