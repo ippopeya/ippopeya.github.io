@@ -11,7 +11,7 @@
 }
 
 .gallery .gallery-loader {
-  min-height: 26vh;
+  min-height: 22vh;
   display: grid;
   place-items: center;
   gap: 12px;
@@ -46,12 +46,14 @@
   align-items: start;
   gap: 8px;
   grid-template-columns: repeat(8, minmax(0, 1fr));
+  position: relative;
 }
 
 .gallery .masonry-column {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 }
 
 .gallery .masonry-item {
@@ -61,9 +63,13 @@
   text-decoration: none;
   background: #ecece7;
   opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
+  transform: translateY(26px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease;
   will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform-origin: top left;
 }
 
 .gallery .masonry-item.is-visible {
@@ -76,6 +82,10 @@
   width: 100%;
   height: auto;
   min-height: 120px;
+}
+
+.gallery .masonry-item.is-flipping {
+  z-index: 2;
 }
 
 .gallery .more-wrap {
