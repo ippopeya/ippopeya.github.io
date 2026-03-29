@@ -241,3 +241,32 @@
   }
 }
 
+/* ===== make gallery use almost full width ===== */
+
+.gallery {
+  width: 100% !important;
+  max-width: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.gallery .gallery-shell {
+  width: calc(100vw - 16px) !important;
+  max-width: 1600px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+@media (max-width: 760px) {
+  .gallery .gallery-shell {
+    width: calc(100vw - 8px) !important;
+    max-width: none !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .gallery .gallery-shell {
+    width: calc(100vw - 6px) !important;
+    max-width: none !important;
+  }
+}
