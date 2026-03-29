@@ -1,24 +1,144 @@
 const imageFiles = [
-  "blackcat.jpg",
-  "IMG_1356.jpg",
-  "mix_terrier_closeup.jpg",
-  "IMG_1387.jpg",
-  "IMG_9753.jpg",
-  "IMG_1447.jpg",
-  "IMG_2746.jpg",
-  "IMG_9796.jpg",
-  "IMG_2748.jpg",
-  "IMG_2749.jpg",
-  "IMG_3009.jpg",
-  "IMG_3040.jpg",
-  "IMG_3309.jpg",
-  "IMG_9910.jpg",
-  "IMG_3522.jpg",
-  "IMG_3719.jpg",
-  "IMG_3985.jpg",
-  "IMG_7695.jpg",
-  "IMG_7745.jpg",
-  "IMG_9782.jpg"
+  {
+    file: "blackcat.jpg",
+    alt: {
+      en: "Black cat portrait",
+      gr: "Πορτρέτο μαύρης γάτας"
+    }
+  },
+  {
+    file: "IMG_1356.jpg",
+    alt: {
+      en: "Dog with a flower",
+      gr: "Σκύλος με λουλούδι"
+    }
+  },
+  {
+    file: "mix_terrier_closeup.jpg",
+    alt: {
+      en: "Close-up portrait of a mixed-breed terrier",
+      gr: "Κοντινό πορτρέτο ημίαιμου τεριέ"
+    }
+  },
+  {
+    file: "IMG_1387.jpg",
+    alt: {
+      en: "Two dogs hugging",
+      gr: "Δύο σκυλιά αγκαλιάζονται"
+    }
+  },
+  {
+    file: "IMG_9753.jpg",
+    alt: {
+      en: "Cat looking out of a window",
+      gr: "Γάτα κοιτάζει έξω από το παράθυρο"
+    }
+  },
+  {
+    file: "IMG_1447.jpg",
+    alt: {
+      en: "Dog portrait outdoors",
+      gr: "Πορτρέτο σκύλου σε εξωτερικό χώρο"
+    }
+  },
+  {
+    file: "IMG_2746.jpg",
+    alt: {
+      en: "Dog portrait in natural light",
+      gr: "Πορτρέτο σκύλου σε φυσικό φως"
+    }
+  },
+  {
+    file: "IMG_9796.jpg",
+    alt: {
+      en: "Red kitten sitting on a lap",
+      gr: "Κόκκινο γατάκι πάνω σε γόνατα"
+    }
+  },
+  {
+    file: "IMG_2748.jpg",
+    alt: {
+      en: "Red dog portrait",
+      gr: "Πορτρέτο κόκκινου σκύλου"
+    }
+  },
+  {
+    file: "IMG_2749.jpg",
+    alt: {
+      en: "Dog portrait close-up",
+      gr: "Κοντινό πορτρέτο σκύλου"
+    }
+  },
+  {
+    file: "IMG_3009.jpg",
+    alt: {
+      en: "Two dogs kissing",
+      gr: "Δύο σκυλιά φιλιούνται"
+    }
+  },
+  {
+    file: "IMG_3040.jpg",
+    alt: {
+      en: "Mixed-breed terrier portrait",
+      gr: "Πορτρέτο ημίαιμου τεριέ"
+    }
+  },
+  {
+    file: "IMG_3309.jpg",
+    alt: {
+      en: "Playful dog portrait",
+      gr: "Παιχνιδιάρικο πορτρέτο σκύλου"
+    }
+  },
+  {
+    file: "IMG_9910.jpg",
+    alt: {
+      en: "White cat portrait",
+      gr: "Πορτρέτο λευκής γάτας"
+    }
+  },
+  {
+    file: "IMG_3522.jpg",
+    alt: {
+      en: "Dog portrait with gentle expression",
+      gr: "Πορτρέτο σκύλου με ήρεμη έκφραση"
+    }
+  },
+  {
+    file: "IMG_3719.jpg",
+    alt: {
+      en: "Dachshund close-up portrait",
+      gr: "Κοντινό πορτρέτο ντάτσχουντ"
+    }
+  },
+  {
+    file: "IMG_3985.jpg",
+    alt: {
+      en: "Dog portrait outdoors in soft light",
+      gr: "Πορτρέτο σκύλου σε απαλό φυσικό φως"
+    }
+  },
+  {
+    file: "IMG_7695.jpg",
+    alt: {
+      en: "Golden retriever in the sea at sunset",
+      gr: "Γκόλντεν ριτρίβερ στη θάλασσα στο ηλιοβασίλεμα"
+    }
+  },
+  {
+    file: "IMG_7745.jpg",
+    alt: {
+      en: "Golden retriever in the sea",
+      gr: "Γκόλντεν ριτρίβερ στη θάλασσα"
+    }
+  },
+  {
+    file: "IMG_9782.jpg",
+    alt: {
+      en: "Cat portrait indoors",
+      gr: "Πορτρέτο γάτας σε εσωτερικό χώρο"
+    }
+  }
 ];
 
 const basePath = "/img/";
@@ -48,8 +168,8 @@ const moreBtn = document.getElementById("moreBtn");
 
 let backToTopBtn = null;
 let galleryLightbox = null;
-const lightboxElements = imageFiles.map((file) => ({
-  href: basePath + file,
+const lightboxElements = imageFiles.map((item) => ({
+  href: basePath + item.file,
   type: "image"
 }));
 
@@ -401,12 +521,6 @@ async function tryAutoLoad() {
   if (!canScrollPage() && autoLoadsUsed < autoLoadLimit) {
     await tryAutoLoad();
   }
-}
-
-function getEstimatedColumnWidth(columnCount) {
-  const gap = getColumnGap();
-  const totalGap = gap * (columnCount - 1);
-  return (gallery.clientWidth - totalGap) / columnCount;
 }
 
 function distributeItemsToColumns(targetColumns) {
