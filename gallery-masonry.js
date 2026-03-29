@@ -42,13 +42,6 @@ const imageFiles = [
     }
   },
   {
-    file: "IMG_2746.jpg",
-    alt: {
-      en: "Dog portrait in natural light",
-      gr: "Πορτρέτο σκύλου σε φυσικό φως"
-    }
-  },
-  {
     file: "IMG_9796.jpg",
     alt: {
       en: "Red kitten sitting on a lap",
