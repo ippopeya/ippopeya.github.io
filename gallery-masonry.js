@@ -83,11 +83,8 @@ function wait(ms) {
 function getColumnCount() {
   if (window.innerWidth <= 520) return 2;
   if (window.innerWidth <= 760) return 3;
-  if (window.innerWidth <= 980) return 4;
-  if (window.innerWidth <= 1280) return 5;
-  if (window.innerWidth <= 1550) return 6;
-  if (window.innerWidth <= 1800) return 7;
-  return 8;
+  if (window.innerWidth <= 1550) return 3;
+  return 4;
 }
 
 function getInitialCount() {
