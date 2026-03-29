@@ -281,7 +281,7 @@ main:has(.gallery) .gallery {
 }
 
 main:has(.gallery) .gallery .gallery-shell {
-  width: min(1680px, calc(100% - 50px)) !important;
+  width: min(1680px, calc(100% - 80px)) !important;
   margin-left: auto !important;
   margin-right: auto !important;
 }
