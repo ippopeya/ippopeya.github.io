@@ -43,11 +43,11 @@ const showMoreChunk = 6;
 const initialFillFactor = 1.02;
 const firstPaintCount = 6;
 
-const revealDelayInitial = 28;
-const revealDelayAuto = 48;
-const revealDelayMore = 56;
+const revealDelayInitial = 40;
+const revealDelayAuto = 75;
+const revealDelayMore = 90;
 
-const flipDuration = 520;
+const flipDuration = 760;
 const resizeDebounce = 140;
 
 const loader = document.getElementById("loader");
@@ -122,6 +122,24 @@ function getColumnGap() {
   if (window.innerWidth <= 760) return 6;
   if (window.innerWidth <= 1280) return 7;
   return 8;
+}
+
+function getEstimatedColumnWidth(columnCount) {
+  const gap = getColumnGap();
+  const totalGap = gap * (columnCount - 1);
+  return (gallery.clientWidth - totalGap) / columnCount;
+}
+
+function getShortestColumnByHeights(heights) {
+  let targetIndex = 0;
+
+  for (let i = 1; i < heights.length; i += 1) {
+    if (heights[i] < heights[targetIndex]) {
+      targetIndex = i;
+    }
+  }
+
+  return targetIndex;
 }
 
 function loadImageMeta(index) {
@@ -269,24 +287,32 @@ async function appendChunk(count, delay) {
   }
 
   const metas = await Promise.all(indices.map(loadImageMeta));
+  const validMetas = metas.filter(Boolean);
 
-  for (const meta of metas) {
+  const estimatedColumnWidth = getEstimatedColumnWidth(columns.length);
+  const estimatedHeights = columns.map((col) => col.offsetHeight);
+
+  for (const meta of validMetas) {
     nextIndex += 1;
-
-    if (!meta) {
-      continue;
-    }
 
     const card = createCard(meta);
     const item = { meta, card };
     shownItems.push(item);
 
-    const targetColumn = getShortestColumn();
-    targetColumn.appendChild(card);
+    const targetIndex = getShortestColumnByHeights(estimatedHeights);
+    columns[targetIndex].appendChild(card);
+
+    const estimatedHeight = estimatedColumnWidth / meta.ratio;
+    estimatedHeights[targetIndex] += estimatedHeight + getColumnGap();
 
     if (delay > 0) {
       await wait(delay);
     }
+  }
+
+  const failedCount = metas.length - validMetas.length;
+  if (failedCount > 0) {
+    nextIndex += failedCount;
   }
 
   initLightbox();
