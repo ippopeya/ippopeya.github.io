@@ -39,29 +39,26 @@
   to { transform: rotate(360deg); }
 }
 
+/* one flow container, no manual columns, no rebuild on resize */
 .gallery .masonry {
-  display: grid;
-  align-items: start;
-  gap: 8px;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-}
-
-.gallery .masonry-column {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  column-count: 8;
+  column-gap: 8px;
 }
 
 .gallery .masonry-item {
-  position: relative;
-  display: block;
+  display: inline-block;
+  vertical-align: top;
+  width: 100%;
+  margin: 0 0 8px;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
   overflow: hidden;
   text-decoration: none;
   background: #ecece7;
   opacity: 0;
-  transform: translateY(30px);
-  transition: opacity .8s ease, transform .8s ease;
-  will-change: transform, opacity;
+  transform: translateY(22px);
+  transition: opacity .65s ease, transform .65s ease;
+  will-change: opacity, transform;
 }
 
 .gallery .masonry-item.is-visible {
@@ -149,35 +146,35 @@
 
 @media (max-width: 1800px) {
   .gallery .masonry {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    column-count: 7;
   }
 }
 
 @media (max-width: 1550px) {
   .gallery .masonry {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    column-count: 6;
   }
 }
 
 @media (max-width: 1280px) {
   .gallery .masonry {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 7px;
+    column-count: 5;
+    column-gap: 7px;
   }
 
-  .gallery .masonry-column {
-    gap: 7px;
+  .gallery .masonry-item {
+    margin-bottom: 7px;
   }
 }
 
 @media (max-width: 980px) {
   .gallery .masonry {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 7px;
+    column-count: 4;
+    column-gap: 7px;
   }
 
-  .gallery .masonry-column {
-    gap: 7px;
+  .gallery .masonry-item {
+    margin-bottom: 7px;
   }
 }
 
@@ -188,12 +185,12 @@
   }
 
   .gallery .masonry {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
+    column-count: 3;
+    column-gap: 6px;
   }
 
-  .gallery .masonry-column {
-    gap: 6px;
+  .gallery .masonry-item {
+    margin-bottom: 6px;
   }
 
   .back-to-top {
@@ -211,12 +208,12 @@
   }
 
   .gallery .masonry {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 5px;
+    column-count: 2;
+    column-gap: 5px;
   }
 
-  .gallery .masonry-column {
-    gap: 5px;
+  .gallery .masonry-item {
+    margin-bottom: 5px;
   }
 
   .back-to-top {
