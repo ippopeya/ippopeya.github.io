@@ -1,36 +1,27 @@
 const imageFiles = [
   "blackcat.jpg",
-  "IMG_1261.jpg",
   "IMG_1356.jpg",
+  "mix_terrier_closeup.jpg",
   "IMG_1387.jpg",
   "IMG_1447.jpg",
   "IMG_2746.jpg",
   "IMG_2748.jpg",
   "IMG_2749.jpg",
-  "IMG_2751.jpg",
-  "IMG_2780.jpg",
   "IMG_2782.jpg",
   "IMG_2786.jpg",
   "IMG_3009.jpg",
   "IMG_3040.jpg",
-  "IMG_3060.jpg",
   "IMG_3309.jpg",
   "IMG_3522.jpg",
   "IMG_3719.jpg",
   "IMG_3985.jpg",
-  "IMG_3989.jpg",
   "IMG_4002.jpg",
-  "IMG_4292.jpg",
-  "IMG_4332.jpg",
   "IMG_7695.jpg",
   "IMG_7745.jpg",
   "IMG_9753.jpg",
   "IMG_9782.jpg",
   "IMG_9796.jpg",
-  "IMG_9908.jpg",
-  "IMG_9910.jpg",
-  "kitten_eating_milk.jpg",
-  "mix_terrier_closeup.jpg"
+  "IMG_9910.jpg"
 ];
 
 const basePath = "/img/";
