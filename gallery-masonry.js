@@ -7,7 +7,7 @@ const imageFiles = [
     }
   },
   {
-    file: "IMG_1356.jpg",
+    file: "blackwhitedog.jpg",
     alt: {
       en: "Dog with a flower",
       gr: "Σκύλος με λουλούδι"
