@@ -280,7 +280,7 @@ main:has(.gallery) {
 }
 
 .gallery .gallery-shell {
-  width: min(1600px, calc(100% - 10px)) !important;
+  width: min(1580px, calc(100% - 10px)) !important;
   margin-left: auto !important;
   margin-right: auto !important;
 }
@@ -292,12 +292,12 @@ main:has(.gallery) {
   }
 
   .gallery .gallery-shell {
-    width: calc(100% - 6px) !important;
+    width: calc(100% - 8px) !important;
   }
 }
 
 @media (max-width: 520px) {
   .gallery .gallery-shell {
-    width: calc(100% - 6px) !important;
+    width: calc(100% - 8px) !important;
   }
 }
