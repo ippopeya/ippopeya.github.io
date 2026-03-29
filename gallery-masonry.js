@@ -198,7 +198,10 @@ function initLightbox() {
       touchNavigation: true,
       loop: true,
       zoomable: false,
-      draggable: true
+      draggable: true,
+      openEffect: "none",
+      closeEffect: "none",
+      slideEffect: "none"
     });
   } else {
     galleryLightbox.reload();
@@ -260,8 +263,9 @@ function updateBackToTopVisibility() {
   if (!backToTopBtn) return;
 
   const isMobile = window.innerWidth <= 760;
+
   if (isMobile) {
-    backToTopBtn.classList.remove("is-visible");
+    backToTopBtn.classList.toggle("is-visible", window.scrollY > 520);
     return;
   }
 
