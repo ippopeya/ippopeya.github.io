@@ -353,11 +353,20 @@ for (const meta of validMetas) {
 }
 
 async function fillInitialViewport() {
-  while (
-    gallery &&
-    gallery.getBoundingClientRect().height < window.innerHeight * initialFillFactor &&
-    nextIndex < imageFiles.length
-  ) {
+  if (!gallery || !columns.length) return;
+
+  const targetHeight = window.innerHeight * initialFillFactor;
+
+  while (nextIndex < imageFiles.length) {
+    const shortestColumn = getShortestColumn();
+    if (!shortestColumn) break;
+
+    const shortestHeight = shortestColumn.getBoundingClientRect().height;
+
+    if (shortestHeight >= targetHeight) {
+      break;
+    }
+
     await appendChunk(2, revealDelayInitial);
   }
 }
