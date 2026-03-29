@@ -83,10 +83,11 @@ function wait(ms) {
 function getColumnCount() {
   if (window.innerWidth <= 520) return 2;
   if (window.innerWidth <= 760) return 3;
-  if (window.innerWidth <= 1550) return 3;
-  return 4;
+  if (window.innerWidth <= 980) return 3;
+  if (window.innerWidth <= 1280) return 4;
+  if (window.innerWidth <= 1550) return 4;
+  return 5;
 }
-
 function getInitialCount() {
   const cols = getColumnCount();
   if (cols >= 7) return 8;
@@ -202,7 +203,7 @@ function initLightbox() {
       draggable: true,
       openEffect: "none",
       closeEffect: "none",
-      slideEffect: "slide"
+      slideEffect: "none"
     });
   }
 }
@@ -368,7 +369,7 @@ function canScrollPage() {
 function isNearBottom() {
   const scrollBottom = window.scrollY + window.innerHeight;
   const docHeight = document.documentElement.scrollHeight;
-  const preloadOffset = Math.max(520, window.innerHeight * 0.68);
+  const preloadOffset = Math.max(560, window.innerHeight * 0.72);
 
   return scrollBottom >= docHeight - preloadOffset;
 }
