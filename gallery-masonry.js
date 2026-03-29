@@ -43,12 +43,12 @@ const showMoreChunk = 6;
 const initialFillFactor = 1.02;
 const firstPaintCount = 6;
 
-const revealDelayInitial = 40;
-const revealDelayAuto = 75;
-const revealDelayMore = 90;
+const revealDelayInitial = 55;
+const revealDelayAuto = 110;
+const revealDelayMore = 125;
 
-const flipDuration = 760;
-const resizeDebounce = 140;
+const flipDuration = 1150;
+const resizeDebounce = 110;
 
 const loader = document.getElementById("loader");
 const app = document.getElementById("galleryApp");
@@ -68,6 +68,7 @@ let isAppending = false;
 let scrollTicking = false;
 let resizeTimer = null;
 let lastColumnCount = 0;
+let initialSeedIndex = 0;
 
 const imageCache = new Map();
 
@@ -109,6 +110,7 @@ function setColumns(newColumns) {
   columns = newColumns;
   gallery.replaceChildren(...newColumns);
   lastColumnCount = newColumns.length;
+  initialSeedIndex = 0;
 }
 
 function getShortestColumn() {
@@ -289,26 +291,34 @@ async function appendChunk(count, delay) {
   const metas = await Promise.all(indices.map(loadImageMeta));
   const validMetas = metas.filter(Boolean);
 
-  const estimatedColumnWidth = getEstimatedColumnWidth(columns.length);
-  const estimatedHeights = columns.map((col) => col.offsetHeight);
+const estimatedColumnWidth = getEstimatedColumnWidth(columns.length);
+const estimatedHeights = columns.map((col) => col.offsetHeight);
 
-  for (const meta of validMetas) {
-    nextIndex += 1;
+for (const meta of validMetas) {
+  nextIndex += 1;
 
-    const card = createCard(meta);
-    const item = { meta, card };
-    shownItems.push(item);
+  const card = createCard(meta);
+  const item = { meta, card };
+  shownItems.push(item);
 
-    const targetIndex = getShortestColumnByHeights(estimatedHeights);
-    columns[targetIndex].appendChild(card);
+  let targetIndex;
 
-    const estimatedHeight = estimatedColumnWidth / meta.ratio;
-    estimatedHeights[targetIndex] += estimatedHeight + getColumnGap();
-
-    if (delay > 0) {
-      await wait(delay);
-    }
+  if (initialSeedIndex < columns.length) {
+    targetIndex = initialSeedIndex;
+    initialSeedIndex += 1;
+  } else {
+    targetIndex = getShortestColumnByHeights(estimatedHeights);
   }
+
+  columns[targetIndex].appendChild(card);
+
+  const estimatedHeight = estimatedColumnWidth / meta.ratio;
+  estimatedHeights[targetIndex] += estimatedHeight + getColumnGap();
+
+  if (delay > 0) {
+    await wait(delay);
+  }
+}
 
   const failedCount = metas.length - validMetas.length;
   if (failedCount > 0) {
@@ -460,7 +470,7 @@ function relayoutWithFlip() {
 
   requestAnimationFrame(() => {
     animatedCards.forEach((card) => {
-      card.style.transition = `transform ${flipDuration}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+      card.style.transition = `transform ${flipDuration}ms cubic-bezier(0.16, 1, 0.3, 1)`;
       card.style.transform = "translate(0, 0) scale(1, 1)";
     });
 
