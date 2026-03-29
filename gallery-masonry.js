@@ -191,7 +191,7 @@ function wait(ms) {
 
 function getColumnCount() {
   if (window.innerWidth <= 520) return 2;
-  if (window.innerWidth <= 760) return 3;
+  if (window.innerWidth <= 760) return 2;
   if (window.innerWidth <= 980) return 3;
   if (window.innerWidth <= 1280) return 4;
   if (window.innerWidth <= 1550) return 4;
