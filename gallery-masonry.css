@@ -281,19 +281,19 @@ main:has(.gallery) .gallery {
 }
 
 main:has(.gallery) .gallery .gallery-shell {
-  width: min(1680px, calc(100% - 24px)) !important;
+  width: min(1600px, calc(100% - 24px)) !important;
   margin-left: auto !important;
   margin-right: auto !important;
 }
 
 @media (max-width: 760px) {
   main:has(.gallery) .gallery .gallery-shell {
-    width: calc(100% - 16px) !important;
+    width: calc(100% - 14px) !important;
   }
 }
 
 @media (max-width: 520px) {
   main:has(.gallery) .gallery .gallery-shell {
-    width: calc(100% - 16px) !important;
+    width: calc(100% - 14px) !important;
   }
 }
